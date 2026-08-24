@@ -41,7 +41,7 @@
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
-  <!-- SDK de Firebase -->
+  <!-- SDK de Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
@@ -55,8 +55,8 @@
       <p id="modal-desc" class="text-xs text-gray-400">Ingrese la contraseña para continuar.</p>
       <input type="password" id="pass-input" class="glass-input text-center text-sm py-2" placeholder="Contraseña">
       <div class="flex gap-2 pt-2">
-        <button onclick="cerrarLogin()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
-        <button onclick="procesarAutenticacion()" class="w-1/2 bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
+        <button type="button" onclick="cerrarLogin()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
+        <button type="button" onclick="procesarAutenticacion()" class="w-1/2 bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
       </div>
     </div>
   </div>
@@ -129,7 +129,7 @@
         <p class="text-[10px] text-gray-400">Control de Turnos y Unidades</p>
       </div>
       <div class="flex items-center gap-2">
-        <select id="select-rol" onchange="cambiarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 border-sky-500/40">
+        <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 border-sky-500/40">
           <option value="invitado">👁️ Invitado</option>
           <option value="moderador">✏️ Moderador</option>
           <option value="admin">⚙️ Admin</option>
@@ -272,10 +272,16 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
-
-  // Inicializar Firebase
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+  // Inicializar Firebase si los datos están colocados
+  let db = null;
+  try {
+    if (firebaseConfig.apiKey !== "TU_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+    }
+  } catch(e) {
+    console.log("Firebase pendiente de configurar claves:", e);
+  }
 
   let camiones = [];
   let rolActual = 'invitado';
@@ -293,7 +299,8 @@ const analytics = getAnalytics(app);
     aplicarPermisosRol('invitado');
   };
 
-  function cambiarRol(nuevoRol) {
+  // GESTIÓN Y AUTENTICACIÓN DE ROLES
+  function seleccionarRol(nuevoRol) {
     if (nuevoRol === 'invitado') {
       rolActual = 'invitado';
       aplicarPermisosRol('invitado');
@@ -324,6 +331,7 @@ const analytics = getAnalytics(app);
       document.getElementById('admin-panel').classList.remove('hidden');
     } else {
       alert("Contraseña incorrecta.");
+      cerrarLogin();
     }
   }
 
@@ -331,21 +339,25 @@ const analytics = getAnalytics(app);
     const editables = document.querySelectorAll('.campo-editable');
     const esInvitado = (rol === 'invitado');
 
-    editables.forEach(el => el.disabled = esInvitado);
+    editables.forEach(el => {
+      el.disabled = esInvitado;
+    });
+
     document.getElementById('btn-add-camion').style.display = esInvitado ? 'none' : 'block';
     document.getElementById('btn-borrador').disabled = esInvitado;
     document.getElementById('btn-guardar').disabled = esInvitado;
 
     if (esInvitado) {
-      document.getElementById('btn-borrador').classList.add('opacity-50');
-      document.getElementById('btn-guardar').classList.add('opacity-50');
+      document.getElementById('btn-borrador').classList.add('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-guardar').classList.add('opacity-50', 'cursor-not-allowed');
     } else {
-      document.getElementById('btn-borrador').classList.remove('opacity-50');
-      document.getElementById('btn-guardar').classList.remove('opacity-50');
+      document.getElementById('btn-borrador').classList.remove('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-guardar').classList.remove('opacity-50', 'cursor-not-allowed');
     }
     renderizarCamiones();
   }
 
+  // TABLA DE UNIDADES
   function agregarFilaCamion(data = null) {
     if (rolActual === 'invitado') return;
     const id = Date.now() + Math.random();
@@ -416,11 +428,13 @@ const analytics = getAnalytics(app);
     });
   }
 
+  // CÁLCULOS MATEMÁTICOS EN TIEMPO REAL
   function calcularTotalesGenerales() {
     let ingreso = parseFloat(document.getElementById('ingreso-general').value) || 0;
     let ruta = parseFloat(document.getElementById('ruta').value) || 0;
     let saldo = parseFloat(document.getElementById('saldo').value) || 0;
 
+    // DISPO Automático = RUTA + SALDO + INGRESO
     let dispoCalc = ruta + saldo + ingreso;
     document.getElementById('dispo').value = dispoCalc.toFixed(2);
 
@@ -490,10 +504,15 @@ const analytics = getAnalytics(app);
     }
   }
 
-  // GUARDADO DIRECTO A FIREBASE DATABASE
+  // GUARDAR EN BASE DE DATOS
   function confirmarGuardarTurno() {
     if (rolActual === 'invitado') return;
     if(!confirm("¿Confirmas guardar el turno completo en la Base de Datos?")) return;
+
+    if(!db) {
+      alert("Atención: Firebase no está configurado aún con las claves API.");
+      return;
+    }
 
     let btnGuardar = document.getElementById('btn-guardar');
     btnGuardar.disabled = true;
@@ -520,7 +539,6 @@ const analytics = getAnalytics(app);
       timestamp: Date.now()
     };
 
-    // Crear un ID único para el registro
     const nuevoRegistroRef = db.ref('registros').push();
     nuevoRegistroRef.set(payload)
       .then(() => {
@@ -543,7 +561,7 @@ const analytics = getAnalytics(app);
 
   function cerrarSesionAdmin() {
     cerrarAdminPanel();
-    cambiarRol('invitado');
+    seleccionarRol('invitado');
     document.getElementById('select-rol').value = 'invitado';
     alert("Sesión de administración cerrada.");
   }
@@ -584,13 +602,17 @@ const analytics = getAnalytics(app);
     document.getElementById('modal-buscador').classList.add('hidden');
   }
 
-  // BÚSQUEDA AVANZADA EN FIREBASE DATABASE
   function ejecutarBusquedaFinca() {
     let query = document.getElementById('input-busca-finca').value.trim().toLowerCase();
     if(!query) return alert("Ingrese un parámetro a buscar.");
 
     let cont = document.getElementById('resultado-busqueda');
     cont.innerHTML = '<p class="text-sky-400 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando registros...</p>';
+
+    if(!db) {
+      cont.innerHTML = '<p class="text-red-400 text-center py-4">Firebase no está configurado todavía.</p>';
+      return;
+    }
 
     db.ref('registros').once('value')
       .then((snapshot) => {
@@ -641,3 +663,6 @@ const analytics = getAnalytics(app);
 </script>
 </body>
 </html>
+
+
+      
