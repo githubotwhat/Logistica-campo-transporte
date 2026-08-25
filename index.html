@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -10,13 +10,12 @@
     body {
       background-color: #07090e;
       color: #e2e8f0;
-      background-image: linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
       background-size: cover;
       background-position: center;
       min-height: 100vh;
     }
     .glass {
-      background: rgba(15, 23, 42, 0.75);
+      background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(56, 189, 248, 0.15);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -26,27 +25,51 @@
       border: 1px solid #334155;
       color: white;
       border-radius: 6px;
-      padding: 3px 6px;
+      padding: 4px 8px;
       width: 100%;
       font-size: 0.75rem;
     }
     .glass-input:focus { outline: none; border-color: #38bdf8; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
   </style>
-</head>
-<body class="p-2 pb-20">
 
-  <!-- LOGIN MODAL -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body id="body-bg" class="p-2 pb-20">
+
+  <!-- MODAL LOGIN -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
     <div class="glass p-6 rounded-2xl w-full max-w-sm text-center space-y-4">
       <i class="fas fa-user-shield text-3xl text-sky-400"></i>
-      <h2 id="modal-titulo" class="text-lg font-bold">AUTENTICACIÓN</h2>
-      <p id="modal-desc" class="text-xs text-gray-400">Ingrese la contraseña para continuar.</p>
+      <h2 class="text-lg font-bold">AUTENTICACIÓN</h2>
       <input type="password" id="pass-input" class="glass-input text-center text-sm py-2" placeholder="Contraseña">
       <div class="flex gap-2 pt-2">
         <button onclick="cerrarLogin()" class="w-1/2 bg-gray-700 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
         <button onclick="procesarAutenticacion()" class="w-1/2 bg-sky-600 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIGURACIÓN ADMIN -->
+  <div id="admin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="glass p-6 rounded-2xl w-full max-w-sm space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+        <h2 class="text-sm font-bold text-sky-400"><i class="fas fa-cog"></i> Configuración Admin</h2>
+        <button onclick="cerrarAdmin()"><i class="fas fa-times text-gray-400"></i></button>
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400">Clave Moderador</label>
+        <input type="text" id="cfg-pass-mod" class="glass-input">
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400">Clave Admin</label>
+        <input type="text" id="cfg-pass-admin" class="glass-input">
+      </div>
+      <div>
+        <label class="text-[10px] text-gray-400">URL Imagen de Fondo</label>
+        <input type="text" id="cfg-bg-url" class="glass-input">
+      </div>
+      <button onclick="guardarConfigAdmin()" class="w-full bg-sky-600 py-2 rounded-lg text-xs font-bold text-white mt-2">Guardar Ajustes</button>
     </div>
   </div>
 
@@ -57,11 +80,24 @@
         <h1 class="font-extrabold text-sm tracking-wider text-sky-400">LOGÍSTICA PRO</h1>
         <p class="text-[10px] text-gray-400">Control de Turnos</p>
       </div>
-      <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 w-auto">
-        <option value="invitado">👁️ Invitado</option>
-        <option value="moderador">✏️ Moderador</option>
-        <option value="admin">⚙️ Admin</option>
-      </select>
+      <div class="flex items-center gap-2">
+        <button id="btn-admin-panel" onclick="abrirAdmin()" class="hidden text-gray-400 hover:text-sky-400 text-xs p-1"><i class="fas fa-cog"></i></button>
+        <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 w-auto">
+          <option value="invitado">👁️ Invitado</option>
+          <option value="moderador">✏️ Moderador</option>
+          <option value="admin">⚙️ Admin</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- BÚSQUEDA Y REGISTROS -->
+    <div class="glass p-3 rounded-2xl space-y-2">
+      <span class="text-[10px] text-sky-300 font-bold block"><i class="fas fa-search"></i> Buscar Historial</span>
+      <div class="flex gap-2">
+        <input type="text" id="buscar-query" class="glass-input" placeholder="Finca, Código o YYYY-MM-DD">
+        <button onclick="buscarEnFirebase()" class="bg-sky-600 px-3 py-1 rounded text-xs font-bold text-white"><i class="fas fa-search"></i></button>
+      </div>
+      <div id="resultados-busqueda" class="hidden space-y-1 max-h-32 overflow-y-auto pt-1"></div>
     </div>
 
     <!-- OPERACIÓN -->
@@ -114,19 +150,71 @@
     </div>
 
     <!-- ACCIONES -->
-    <div class="grid grid-cols-2 gap-2">
-      <button id="btn-guardar" onclick="guardarDatos()" class="bg-sky-600 py-2.5 rounded-xl font-bold text-xs text-white col-span-2">Guardar Registro Local</button>
-    </div>
+    <button id="btn-guardar" onclick="guardarEnFirebase()" class="w-full bg-sky-600 py-2.5 rounded-xl font-bold text-xs text-white shadow-lg shadow-sky-500/20">
+      <i class="fas fa-cloud-upload-alt mr-1"></i> Guardar Turno
+    </button>
   </div>
 
 <script>
+  // CONFIGURACIÓN DE FIREBASE
+  // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBvx1odsjS6mX7-Bh9mf0Mjk5ZBm6l_PHM",
+  authDomain: "logistica-campo-transporte.firebaseapp.com",
+  databaseURL: "https://logistica-campo-transporte-default-rtdb.firebaseio.com",
+  projectId: "logistica-campo-transporte",
+  storageBucket: "logistica-campo-transporte.firebasestorage.app",
+  messagingSenderId: "893505736870",
+  appId: "1:893505736870:web:3f19c040f78f46a323e467",
+  measurementId: "G-WXK7F42LHK"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+  let db = null;
+  let configApp = {
+    passMod: 'editar',
+    passAdmin: 'zafra',
+    bgUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop'
+  };
+
+  try {
+    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY") {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      
+      // Escuchar ajustes globales de Admin
+      db.ref('configuracion').on('value', snapshot => {
+        let val = snapshot.val();
+        if (val) {
+          configApp = { ...configApp, ...val };
+          aplicarFondo(configApp.bgUrl);
+        }
+      });
+    }
+  } catch(e) { console.warn("Firebase no conectado:", e); }
+
   let unidades = [];
   let rol = 'invitado';
 
   window.onload = () => {
     document.getElementById('fecha').valueAsDate = new Date();
+    aplicarFondo(configApp.bgUrl);
     aplicarRol('invitado');
   };
+
+  function aplicarFondo(url) {
+    document.body.style.backgroundImage = `linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('${url}')`;
+  }
 
   function seleccionarRol(val) {
     if (val === 'invitado') {
@@ -144,14 +232,19 @@
 
   function procesarAutenticacion() {
     let p = document.getElementById('pass-input').value;
-    if (p === 'editar' || p === 'zafra') {
-      rol = p === 'zafra' ? 'admin' : 'moderador';
+    if (p === configApp.passAdmin) {
+      rol = 'admin';
       cerrarLogin();
-      aplicarRol(rol);
+      aplicarRol('admin');
+    } else if (p === configApp.passMod) {
+      rol = 'moderador';
+      cerrarLogin();
+      aplicarRol('moderador');
     } else {
-      alert("Clave incorrecta (Usar: 'editar' o 'zafra')");
+      alert("Contraseña incorrecta.");
       cerrarLogin();
     }
+    document.getElementById('pass-input').value = '';
   }
 
   function aplicarRol(r) {
@@ -159,7 +252,41 @@
     document.querySelectorAll('.campo-editable').forEach(e => e.disabled = esInv);
     document.getElementById('btn-add').style.display = esInv ? 'none' : 'block';
     document.getElementById('btn-guardar').disabled = esInv;
+    document.getElementById('btn-admin-panel').style.display = (r === 'admin') ? 'block' : 'none';
+    
+    if (esInv) {
+      document.getElementById('btn-guardar').classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+      document.getElementById('btn-guardar').classList.remove('opacity-50', 'cursor-not-allowed');
+    }
     renderTabla();
+  }
+
+  function abrirAdmin() {
+    document.getElementById('cfg-pass-mod').value = configApp.passMod;
+    document.getElementById('cfg-pass-admin').value = configApp.passAdmin;
+    document.getElementById('cfg-bg-url').value = configApp.bgUrl;
+    document.getElementById('admin-modal').classList.remove('hidden');
+  }
+
+  function cerrarAdmin() {
+    document.getElementById('admin-modal').classList.add('hidden');
+  }
+
+  function guardarConfigAdmin() {
+    configApp.passMod = document.getElementById('cfg-pass-mod').value;
+    configApp.passAdmin = document.getElementById('cfg-pass-admin').value;
+    configApp.bgUrl = document.getElementById('cfg-bg-url').value;
+
+    if (db) {
+      db.ref('configuracion').set(configApp)
+        .then(() => alert("Ajustes guardados en la nube."))
+        .catch(err => alert("Error: " + err.message));
+    } else {
+      aplicarFondo(configApp.bgUrl);
+      alert("Ajustes aplicados localmente.");
+    }
+    cerrarAdmin();
   }
 
   function agregarUnidad() {
@@ -177,6 +304,14 @@
   function updateUni(id, campo, val) {
     let u = unidades.find(x => x.id === id);
     if (u) { u[campo] = val; calcular(); }
+  }
+
+  function calcularMinutos(llegada, salida) {
+    if(!llegada || !salida) return 0;
+    let [h1, m1] = llegada.split(':').map(Number);
+    let [h2, m2] = salida.split(':').map(Number);
+    let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+    return diff > 0 ? diff : 0;
   }
 
   function renderTabla() {
@@ -208,10 +343,85 @@
     
     let totalTn = unidades.reduce((a, b) => a + (parseFloat(b.tn)||0), 0);
     document.getElementById('res-enviadas').innerText = totalTn.toFixed(2);
+
+    let totalPerdido = unidades.reduce((a, b) => a + calcularMinutos(b.lleg, b.sal), 0);
+    document.getElementById('res-perdido').innerText = `${totalPerdido} min`;
   }
 
-  function guardarDatos() {
-    alert("¡Datos procesados correctamente!");
+  function guardarEnFirebase() {
+    if (rol === 'invitado') return;
+    if (!db) return alert("Ingresa tus credenciales de Firebase en el código.");
+
+    let payload = {
+      fecha: document.getElementById('fecha').value,
+      finca: document.getElementById('finca').value || 'Sin Nombre',
+      codigo: document.getElementById('codigo').value || 'S/C',
+      ingreso: parseFloat(document.getElementById('ingreso').value) || 0,
+      ruta: parseFloat(document.getElementById('ruta').value) || 0,
+      saldo: parseFloat(document.getElementById('saldo').value) || 0,
+      dispo: parseFloat(document.getElementById('dispo').value) || 0,
+      tonsEnviadas: parseFloat(document.getElementById('res-enviadas').innerText) || 0,
+      tiempoPerdidoTotal: document.getElementById('res-perdido').innerText,
+      unidades: unidades,
+      timestamp: Date.now()
+    };
+
+    db.ref('turnos').push().set(payload)
+      .then(() => {
+        alert("¡Turno guardado con éxito!");
+        unidades = [];
+        renderTabla();
+        calcular();
+      })
+      .catch(err => alert("Error: " + err.message));
+  }
+
+  function buscarEnFirebase() {
+    let q = document.getElementById('buscar-query').value.toLowerCase().trim();
+    let resContainer = document.getElementById('resultados-busqueda');
+    if (!q) { resContainer.classList.add('hidden'); return; }
+
+    if (!db) return alert("Firebase no configurado.");
+
+    db.ref('turnos').once('value', snapshot => {
+      let data = snapshot.val();
+      resContainer.innerHTML = '';
+      resContainer.classList.remove('hidden');
+
+      if (!data) {
+        resContainer.innerHTML = '<p class="text-[10px] text-gray-500">Sin registros.</p>';
+        return;
+      }
+
+      let encontrados = 0;
+      Object.values(data).forEach(t => {
+        let finca = String(t.finca || '').toLowerCase();
+        let codigo = String(t.codigo || '').toLowerCase();
+        let fecha = String(t.fecha || '').toLowerCase();
+
+        if (finca.includes(q) || codigo.includes(q) || fecha.includes(q)) {
+          encontrados++;
+          let item = document.createElement('div');
+          item.className = 'bg-slate-800 p-2 rounded text-[10px] space-y-0.5 border border-slate-700';
+          item.innerHTML = `
+            <div class="flex justify-between font-bold text-sky-300">
+              <span>${t.finca} (${t.codigo})</span>
+              <span>${t.fecha}</span>
+            </div>
+            <div class="flex justify-between text-gray-400">
+              <span>TN: ${t.tonsEnviadas}</span>
+              <span>T.Perdido: ${t.tiempoPerdidoTotal}</span>
+              <span>Uni: ${t.unidades ? t.unidades.length : 0}</span>
+            </div>
+          `;
+          resContainer.appendChild(item);
+        }
+      });
+
+      if (encontrados === 0) {
+        resContainer.innerHTML = '<p class="text-[10px] text-gray-500">No hay coincidencias.</p>';
+      }
+    });
   }
 </script>
 </body>
