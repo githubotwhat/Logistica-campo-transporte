@@ -10,12 +10,13 @@
     body {
       background-color: #07090e;
       color: #e2e8f0;
+      background-image: linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
       background-size: cover;
       background-position: center;
       min-height: 100vh;
     }
     .glass {
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(56, 189, 248, 0.15);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -25,64 +26,110 @@
       border: 1px solid #334155;
       color: white;
       border-radius: 6px;
-      padding: 4px 8px;
+      padding: 3px 6px;
       width: 100%;
       font-size: 0.75rem;
     }
-    .glass-input:focus { outline: none; border-color: #38bdf8; }
+    .glass-input:focus {
+      outline: none;
+      border-color: #38bdf8;
+      box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+    }
+    .neon-text {
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
-
+  <!-- SDK de Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
-<body id="body-bg" class="p-2 pb-20">
+<body class="p-2 pb-20">
 
-  <!-- MODAL LOGIN -->
+  <!-- MODAL DE SELECCIÓN DE ROL Y AUTENTICACIÓN -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
     <div class="glass p-6 rounded-2xl w-full max-w-sm text-center space-y-4">
-      <i class="fas fa-user-shield text-3xl text-sky-400"></i>
-      <h2 class="text-lg font-bold">AUTENTICACIÓN</h2>
+      <div class="text-sky-400 text-3xl mb-2"><i class="fas fa-user-shield"></i></div>
+      <h2 id="modal-titulo" class="text-lg font-bold tracking-wider">AUTENTICACIÓN</h2>
+      <p id="modal-desc" class="text-xs text-gray-400">Ingrese la contraseña para continuar.</p>
       <input type="password" id="pass-input" class="glass-input text-center text-sm py-2" placeholder="Contraseña">
       <div class="flex gap-2 pt-2">
-        <button onclick="cerrarLogin()" class="w-1/2 bg-gray-700 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
-        <button onclick="procesarAutenticacion()" class="w-1/2 bg-sky-600 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
+        <button type="button" onclick="cerrarLogin()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
+        <button type="button" onclick="procesarAutenticacion()" class="w-1/2 bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL CONFIGURACIÓN ADMIN -->
-  <div id="admin-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
-    <div class="glass p-6 rounded-2xl w-full max-w-sm space-y-3">
-      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-        <h2 class="text-sm font-bold text-sky-400"><i class="fas fa-cog"></i> Configuración Admin</h2>
-        <button onclick="cerrarAdmin()"><i class="fas fa-times text-gray-400"></i></button>
+  <!-- PANEL DE ADMINISTRACIÓN COMPLETO -->
+  <div id="admin-panel" class="fixed inset-x-2 top-2 z-40 glass p-4 rounded-2xl hidden border-sky-500/40 max-h-[95vh] overflow-y-auto no-scrollbar">
+    <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
+      <h3 class="font-bold text-sky-400 text-sm"><i class="fas fa-cogs mr-2"></i>Panel de Administración</h3>
+      <button onclick="cerrarAdminPanel()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+    </div>
+    
+    <div class="space-y-4 text-xs">
+      <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700">
+        <label class="block text-sky-300 font-bold mb-2">Gestión de Contraseñas</label>
+        <div class="space-y-2">
+          <div>
+            <span class="text-gray-400 text-[10px]">Clave Moderador</span>
+            <input type="text" id="nueva-pass-mod" class="glass-input" placeholder="Clave actual: editar">
+          </div>
+          <div>
+            <span class="text-gray-400 text-[10px]">Clave Admin</span>
+            <input type="text" id="nueva-pass-admin" class="glass-input" placeholder="Clave actual: zafra">
+          </div>
+          <button onclick="guardarNuevasPasswords()" class="w-full bg-sky-600 hover:bg-sky-500 py-1.5 rounded font-bold text-white mt-1">Guardar Contraseñas</button>
+        </div>
       </div>
-      <div>
-        <label class="text-[10px] text-gray-400">Clave Moderador</label>
-        <input type="text" id="cfg-pass-mod" class="glass-input">
+      
+      <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700">
+        <label class="block text-sky-300 font-bold mb-2">Fondo de Pantalla Local</label>
+        <input type="file" id="bg-file-input" accept="image/*" class="glass-input mb-2 text-[10px]">
+        <div class="flex gap-2">
+          <button onclick="aplicarFondoArchivo()" class="w-1/2 bg-blue-600 hover:bg-blue-500 py-1.5 rounded text-white font-bold">Subir Imagen</button>
+          <button onclick="quitarFondoCustom()" class="w-1/2 bg-red-900/60 hover:bg-red-800 py-1.5 rounded text-white font-bold">Restaurar Original</button>
+        </div>
       </div>
-      <div>
-        <label class="text-[10px] text-gray-400">Clave Admin</label>
-        <input type="text" id="cfg-pass-admin" class="glass-input">
+      
+      <div class="border-t border-slate-700 pt-2">
+        <button onclick="abrirBuscadorFincas()" class="w-full bg-slate-800 hover:bg-slate-700 py-2.5 rounded font-semibold text-sky-300 border border-sky-500/30">
+          <i class="fas fa-search mr-2"></i>Consultar Registros
+        </button>
       </div>
-      <div>
-        <label class="text-[10px] text-gray-400">URL Imagen de Fondo</label>
-        <input type="text" id="cfg-bg-url" class="glass-input">
-      </div>
-      <button onclick="guardarConfigAdmin()" class="w-full bg-sky-600 py-2 rounded-lg text-xs font-bold text-white mt-2">Guardar Ajustes</button>
+
+      <button onclick="cerrarSesionAdmin()" class="w-full bg-red-600/80 hover:bg-red-600 py-2 rounded text-white font-bold">Cerrar Sesión Admin</button>
     </div>
   </div>
 
+  <!-- MODAL BUSCADOR POR FINCA / CÓDIGO / FECHA -->
+  <div id="modal-buscador" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/90 backdrop-blur-md hidden">
+    <div class="glass p-4 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-bold text-sky-400 text-sm">Historial de Registros</h3>
+        <button onclick="cerrarBuscadorFincas()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <input type="text" id="input-busca-finca" class="glass-input" placeholder="Buscar por Finca, Código o Fecha (YYYY-MM-DD)...">
+        <button onclick="ejecutarBusquedaFinca()" class="bg-sky-600 px-4 py-1 rounded text-white font-bold">Buscar</button>
+      </div>
+      <div id="resultado-busqueda" class="overflow-y-auto space-y-2 flex-1 no-scrollbar text-xs">
+        <p class="text-gray-400 text-center py-4">Ingrese un término para buscar...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP CONTAINER -->
   <div class="max-w-md mx-auto space-y-3">
-    <!-- ENCABEZADO -->
+    
     <div class="flex justify-between items-center glass p-3 rounded-2xl">
       <div>
-        <h1 class="font-extrabold text-sm tracking-wider text-sky-400">LOGÍSTICA PRO</h1>
-        <p class="text-[10px] text-gray-400">Control de Turnos</p>
+        <h1 class="font-extrabold text-sm tracking-wider text-sky-400 neon-text">LOGÍSTICA PRO</h1>
+        <p class="text-[10px] text-gray-400">Control de Turnos y Unidades</p>
       </div>
       <div class="flex items-center gap-2">
-        <button id="btn-admin-panel" onclick="abrirAdmin()" class="hidden text-gray-400 hover:text-sky-400 text-xs p-1"><i class="fas fa-cog"></i></button>
-        <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 w-auto">
+        <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 border-sky-500/40">
           <option value="invitado">👁️ Invitado</option>
           <option value="moderador">✏️ Moderador</option>
           <option value="admin">⚙️ Admin</option>
@@ -90,73 +137,120 @@
       </div>
     </div>
 
-    <!-- BÚSQUEDA Y REGISTROS -->
+    <!-- DATOS DE OPERACIÓN -->
     <div class="glass p-3 rounded-2xl space-y-2">
-      <span class="text-[10px] text-sky-300 font-bold block"><i class="fas fa-search"></i> Buscar Historial</span>
-      <div class="flex gap-2">
-        <input type="text" id="buscar-query" class="glass-input" placeholder="Finca, Código o YYYY-MM-DD">
-        <button onclick="buscarEnFirebase()" class="bg-sky-600 px-3 py-1 rounded text-xs font-bold text-white"><i class="fas fa-search"></i></button>
+      <h2 class="text-[11px] font-bold uppercase tracking-wide text-sky-300 border-b border-slate-700 pb-1">Datos de Operación</h2>
+      
+      <div class="grid grid-cols-2 gap-2">
+        <div>
+          <label class="text-[9px] text-gray-400">FECHA</label>
+          <input type="date" id="fecha" class="glass-input campo-editable">
+        </div>
+        <div>
+          <label class="text-[9px] text-gray-400">INGRESO</label>
+          <input type="number" id="ingreso-general" class="glass-input campo-editable" placeholder="0" oninput="calcularTotalesGenerales()">
+        </div>
       </div>
-      <div id="resultados-busqueda" class="hidden space-y-1 max-h-32 overflow-y-auto pt-1"></div>
-    </div>
 
-    <!-- OPERACIÓN -->
-    <div class="glass p-3 rounded-2xl space-y-2">
       <div class="grid grid-cols-2 gap-2">
-        <div><label class="text-[9px] text-gray-400">FECHA</label><input type="date" id="fecha" class="glass-input campo-editable"></div>
-        <div><label class="text-[9px] text-gray-400">INGRESO</label><input type="number" id="ingreso" class="glass-input campo-editable" oninput="calcular()"></div>
+        <div>
+          <label class="text-[9px] text-gray-400">FINCA</label>
+          <input type="text" id="finca" class="glass-input campo-editable" placeholder="Nombre finca">
+        </div>
+        <div>
+          <label class="text-[9px] text-gray-400">CÓDIGO FINCA</label>
+          <input type="text" id="codigo-finca" class="glass-input campo-editable" placeholder="Ej: 264-01">
+        </div>
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div><label class="text-[9px] text-gray-400">FINCA</label><input type="text" id="finca" class="glass-input campo-editable"></div>
-        <div><label class="text-[9px] text-gray-400">CÓDIGO FINCA</label><input type="text" id="codigo" class="glass-input campo-editable"></div>
-      </div>
+
       <div class="grid grid-cols-3 gap-2">
-        <div><label class="text-[9px] text-gray-400">RUTA</label><input type="number" id="ruta" class="glass-input campo-editable" oninput="calcular()"></div>
-        <div><label class="text-[9px] text-gray-400">SALDO</label><input type="number" id="saldo" class="glass-input campo-editable" oninput="calcular()"></div>
-        <div><label class="text-[9px] text-gray-400">DISPO</label><input type="number" id="dispo" class="glass-input bg-slate-800 font-bold text-sky-300" readonly></div>
+        <div>
+          <label class="text-[9px] text-gray-400">RUTA</label>
+          <input type="number" id="ruta" class="glass-input campo-editable" placeholder="0" oninput="calcularTotalesGenerales()">
+        </div>
+        <div>
+          <label class="text-[9px] text-gray-400">SALDO</label>
+          <input type="number" id="saldo" class="glass-input campo-editable" placeholder="0" oninput="calcularTotalesGenerales()">
+        </div>
+        <div>
+          <label class="text-[9px] text-gray-400">DISPO</label>
+          <input type="number" id="dispo" class="glass-input bg-slate-800 text-sky-300 font-bold" placeholder="0" readonly>
+        </div>
       </div>
     </div>
 
-    <!-- INDICADORES -->
-    <div class="grid grid-cols-2 gap-2 text-xs font-bold">
-      <div class="glass p-2 rounded-xl border-l-4 border-sky-400">
-        <span class="text-[9px] text-gray-400 block font-normal">Tons Enviadas 📤</span>
-        <span id="res-enviadas" class="text-sky-300">0.00</span>
+    <!-- TARJETAS DE INDICADORES -->
+    <div class="grid grid-cols-2 gap-2">
+      <div class="glass p-2.5 rounded-xl border-l-4 border-sky-400">
+        <label class="text-[9px] text-gray-400 block">Tons Campo (Manual) 🌾</label>
+        <input type="number" id="input-tons-campo" class="glass-input campo-editable font-bold text-sky-200" placeholder="0" oninput="calcularTotalesGenerales()">
       </div>
-      <div class="glass p-2 rounded-xl border-l-4 border-yellow-400">
-        <span class="text-[9px] text-gray-400 block font-normal">T. Perdido Total 🕐</span>
-        <span id="res-perdido" class="text-yellow-300">0 min</span>
+      <div class="glass p-2.5 rounded-xl border-l-4 border-green-400">
+        <span class="text-[9px] text-gray-400 block">Tons Enviadas 📤</span>
+        <span id="res-tons-enviadas" class="text-xs font-bold text-green-300">0.00</span>
+      </div>
+      <div class="glass p-2.5 rounded-xl border-l-4 border-yellow-400">
+        <span class="text-[9px] text-gray-400 block">Tiempo Perdido Total 🕐</span>
+        <span id="res-falta-transporte" class="text-xs font-bold text-yellow-300">0 min</span>
+      </div>
+      <div class="glass p-2.5 rounded-xl border-l-4 border-purple-400">
+        <span class="text-[9px] text-gray-400 block">Saldo Hora ⏰</span>
+        <span id="res-saldo-hora" class="text-xs font-bold text-purple-300">0.00</span>
+      </div>
+      <div class="glass p-2.5 rounded-xl border-l-4 border-pink-400 col-span-2">
+        <span class="text-[9px] text-gray-400 block">Unidades Requeridas 🚛</span>
+        <span id="res-unidades-requeridas" class="text-xs font-bold text-pink-300">0.00</span>
       </div>
     </div>
 
-    <!-- TABLA UNIDADES -->
+    <!-- CONTROL DE UNIDADES COMPACTO -->
     <div class="glass p-3 rounded-2xl space-y-2">
       <div class="flex justify-between items-center border-b border-slate-700 pb-1">
-        <h2 class="text-[11px] font-bold text-sky-300">Unidades</h2>
-        <button id="btn-add" onclick="agregarUnidad()" class="bg-sky-600 px-2 py-0.5 rounded text-[10px] font-bold text-white"><i class="fas fa-plus"></i> Agregar</button>
+        <h2 class="text-[11px] font-bold uppercase tracking-wide text-sky-300">Control de Unidades</h2>
+        <button id="btn-add-camion" onclick="agregarFilaCamion()" class="bg-sky-600/80 hover:bg-sky-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">
+          <i class="fas fa-plus mr-1"></i> Agregar
+        </button>
       </div>
-      <table class="w-full text-left text-[10px]">
-        <thead>
-          <tr class="text-gray-400 border-b border-slate-700">
-            <th class="p-1">Uni.</th>
-            <th class="p-1">TN</th>
-            <th class="p-1">Lleg.</th>
-            <th class="p-1">Sal.</th>
-            <th class="p-1 text-center">Acc.</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-unidades"></tbody>
-      </table>
+
+      <div class="overflow-x-auto no-scrollbar">
+        <table class="w-full text-left border-collapse text-[10px]">
+          <thead>
+            <tr class="text-gray-400 border-b border-slate-700/60">
+              <th class="p-1">Uni.</th>
+              <th class="p-1">TN</th>
+              <th class="p-1">Lleg.</th>
+              <th class="p-1">Sal.</th>
+              <th class="p-1">Jau.</th>
+              <th class="p-1">Perd.</th>
+              <th class="p-1 text-center">Acc.</th>
+            </tr>
+          </thead>
+          <tbody id="contenedor-camiones">
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- ACCIONES -->
-    <button id="btn-guardar" onclick="guardarEnFirebase()" class="w-full bg-sky-600 py-2.5 rounded-xl font-bold text-xs text-white shadow-lg shadow-sky-500/20">
-      <i class="fas fa-cloud-upload-alt mr-1"></i> Guardar Turno
-    </button>
+    <!-- OBSERVACIONES -->
+    <div class="glass p-2.5 rounded-2xl">
+      <label class="text-[9px] text-gray-400 block mb-1">OBSERVACIONES</label>
+      <textarea id="obs" class="glass-input h-14 resize-none campo-editable" placeholder="Notas del turno..."></textarea>
+    </div>
+
+    <!-- BOTONES -->
+    <div class="grid grid-cols-2 gap-2 pb-6">
+      <button id="btn-borrador" onclick="sincronizarBorrador()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 py-2.5 rounded-xl font-bold text-xs border border-sky-500/30 flex items-center justify-center gap-2">
+        <i class="fas fa-save"></i> Borrador
+      </button>
+      <button id="btn-guardar" onclick="confirmarGuardarTurno()" class="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white py-2.5 rounded-xl font-bold text-xs shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2">
+        <i class="fas fa-paper-plane"></i> Guardar Turno
+      </button>
+    </div>
+
   </div>
 
 <script>
-  // CONFIGURACIÓN DE FIREBASE
+  // CONFIGURACIÓN DE FIREBASE (Asegúrate de poner tus claves aquí)
   const firebaseConfig = {
   apiKey: "AIzaSyBvx1odsjS6mX7-Bh9mf0Mjk5ZBm6l_PHM",
   authDomain: "logistica-campo-transporte.firebaseapp.com",
@@ -168,130 +262,121 @@
   measurementId: "G-WXK7F42LHK"
 };
 
+  // Inicializar Firebase si los datos están colocados
   let db = null;
-  let configApp = {
-    passMod: 'editar',
-    passAdmin: 'zafra',
-    bgUrl: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop'
-  };
-
   try {
-    if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.apiKey !== "TU_API_KEY") {
+    if (firebaseConfig.apiKey !== "TU_API_KEY") {
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
-      
-      // Escuchar ajustes globales de Admin
-      db.ref('configuracion').on('value', snapshot => {
-        let val = snapshot.val();
-        if (val) {
-          configApp = { ...configApp, ...val };
-          aplicarFondo(configApp.bgUrl);
-        }
-      });
     }
-  } catch(e) { console.warn("Firebase no conectado:", e); }
-
-  let unidades = [];
-  let rol = 'invitado';
-
-  window.onload = () => {
-    document.getElementById('fecha').valueAsDate = new Date();
-    aplicarFondo(configApp.bgUrl);
-    aplicarRol('invitado');
-  };
-
-  function aplicarFondo(url) {
-    document.body.style.backgroundImage = `linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('${url}')`;
+  } catch(e) {
+    console.log("Firebase pendiente de configurar claves:", e);
   }
 
-  function seleccionarRol(val) {
-    if (val === 'invitado') {
-      rol = 'invitado';
-      aplicarRol('invitado');
+  let camiones = [];
+  let rolActual = 'invitado';
+  let targetRolPendiente = '';
+
+  let passModerador = localStorage.getItem('passMod') || 'editar';
+  let passAdmin = localStorage.getItem('passAdmin') || 'zafra';
+
+  window.onload = () => {
+    let customBg = localStorage.getItem('customBg');
+    if(customBg) document.body.style.backgroundImage = `linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('${customBg}')`;
+    
+    document.getElementById('fecha').valueAsDate = new Date();
+    cargarBorradorLocal();
+    aplicarPermisosRol('invitado');
+  };
+
+  // GESTIÓN Y AUTENTICACIÓN DE ROLES
+  function seleccionarRol(nuevoRol) {
+    if (nuevoRol === 'invitado') {
+      rolActual = 'invitado';
+      aplicarPermisosRol('invitado');
     } else {
+      targetRolPendiente = nuevoRol;
+      document.getElementById('modal-titulo').innerText = nuevoRol === 'admin' ? 'PANEL ADMINISTRADOR' : 'ACCESO MODERADOR';
+      document.getElementById('modal-desc').innerText = `Ingrese la contraseña para el modo ${nuevoRol}.`;
+      document.getElementById('pass-input').value = '';
       document.getElementById('login-modal').classList.remove('hidden');
     }
   }
 
   function cerrarLogin() {
     document.getElementById('login-modal').classList.add('hidden');
-    document.getElementById('select-rol').value = rol;
+    document.getElementById('select-rol').value = rolActual;
   }
 
   function procesarAutenticacion() {
-    let p = document.getElementById('pass-input').value;
-    if (p === configApp.passAdmin) {
-      rol = 'admin';
+    let inputPass = document.getElementById('pass-input').value;
+    if (targetRolPendiente === 'moderador' && inputPass === passModerador) {
+      rolActual = 'moderador';
       cerrarLogin();
-      aplicarRol('admin');
-    } else if (p === configApp.passMod) {
-      rol = 'moderador';
+      aplicarPermisosRol('moderador');
+    } else if (targetRolPendiente === 'admin' && inputPass === passAdmin) {
+      rolActual = 'admin';
       cerrarLogin();
-      aplicarRol('moderador');
+      aplicarPermisosRol('admin');
+      document.getElementById('admin-panel').classList.remove('hidden');
     } else {
       alert("Contraseña incorrecta.");
       cerrarLogin();
     }
-    document.getElementById('pass-input').value = '';
   }
 
-  function aplicarRol(r) {
-    const esInv = r === 'invitado';
-    document.querySelectorAll('.campo-editable').forEach(e => e.disabled = esInv);
-    document.getElementById('btn-add').style.display = esInv ? 'none' : 'block';
-    document.getElementById('btn-guardar').disabled = esInv;
-    document.getElementById('btn-admin-panel').style.display = (r === 'admin') ? 'block' : 'none';
-    
-    if (esInv) {
+  function aplicarPermisosRol(rol) {
+    const editables = document.querySelectorAll('.campo-editable');
+    const esInvitado = (rol === 'invitado');
+
+    editables.forEach(el => {
+      el.disabled = esInvitado;
+    });
+
+    document.getElementById('btn-add-camion').style.display = esInvitado ? 'none' : 'block';
+    document.getElementById('btn-borrador').disabled = esInvitado;
+    document.getElementById('btn-guardar').disabled = esInvitado;
+
+    if (esInvitado) {
+      document.getElementById('btn-borrador').classList.add('opacity-50', 'cursor-not-allowed');
       document.getElementById('btn-guardar').classList.add('opacity-50', 'cursor-not-allowed');
     } else {
+      document.getElementById('btn-borrador').classList.remove('opacity-50', 'cursor-not-allowed');
       document.getElementById('btn-guardar').classList.remove('opacity-50', 'cursor-not-allowed');
     }
-    renderTabla();
+    renderizarCamiones();
   }
 
-  function abrirAdmin() {
-    document.getElementById('cfg-pass-mod').value = configApp.passMod;
-    document.getElementById('cfg-pass-admin').value = configApp.passAdmin;
-    document.getElementById('cfg-bg-url').value = configApp.bgUrl;
-    document.getElementById('admin-modal').classList.remove('hidden');
+  // TABLA DE UNIDADES
+  function agregarFilaCamion(data = null) {
+    if (rolActual === 'invitado') return;
+    const id = Date.now() + Math.random();
+    camiones.push({
+      id: id,
+      unidad: data ? data.unidad : '',
+      tn: data ? data.tn : 0,
+      llegada: data ? data.llegada : '',
+      salida: data ? data.salida : '',
+      jaulas: data ? data.jaulas : 0
+    });
+    renderizarCamiones();
+    calcularTotalesGenerales();
   }
 
-  function cerrarAdmin() {
-    document.getElementById('admin-modal').classList.add('hidden');
+  function eliminarCamion(id) {
+    if (rolActual === 'invitado') return;
+    camiones = camiones.filter(c => c.id !== id);
+    renderizarCamiones();
+    calcularTotalesGenerales();
   }
 
-  function guardarConfigAdmin() {
-    configApp.passMod = document.getElementById('cfg-pass-mod').value;
-    configApp.passAdmin = document.getElementById('cfg-pass-admin').value;
-    configApp.bgUrl = document.getElementById('cfg-bg-url').value;
-
-    if (db) {
-      db.ref('configuracion').set(configApp)
-        .then(() => alert("Ajustes guardados en la nube."))
-        .catch(err => alert("Error: " + err.message));
-    } else {
-      aplicarFondo(configApp.bgUrl);
-      alert("Ajustes aplicados localmente.");
+  function actualizarCamion(id, campo, valor) {
+    if (rolActual === 'invitado') return;
+    let c = camiones.find(item => item.id === id);
+    if(c) {
+      c[campo] = valor;
+      calcularTotalesGenerales();
     }
-    cerrarAdmin();
-  }
-
-  function agregarUnidad() {
-    if (rol === 'invitado') return;
-    unidades.push({ id: Date.now(), uni: '', tn: 0, lleg: '', sal: '' });
-    renderTabla();
-  }
-
-  function borrarUnidad(id) {
-    unidades = unidades.filter(u => u.id !== id);
-    renderTabla();
-    calcular();
-  }
-
-  function updateUni(id, campo, val) {
-    let u = unidades.find(x => x.id === id);
-    if (u) { u[campo] = val; calcular(); }
   }
 
   function calcularMinutos(llegada, salida) {
@@ -302,115 +387,270 @@
     return diff > 0 ? diff : 0;
   }
 
-  function renderTabla() {
-    let tb = document.getElementById('tabla-unidades');
-    tb.innerHTML = '';
-    if (unidades.length === 0) {
-      tb.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-2">Sin registros</td></tr>';
+  function renderizarCamiones() {
+    const contenedor = document.getElementById('contenedor-camiones');
+    contenedor.innerHTML = '';
+    
+    if(camiones.length === 0) {
+      contenedor.innerHTML = '<tr><td colspan="7" class="text-center text-[10px] text-gray-500 py-3">Sin unidades registradas.</td></tr>';
       return;
     }
-    unidades.forEach(u => {
+
+    const disabledAttr = rolActual === 'invitado' ? 'disabled' : '';
+
+    camiones.forEach((c) => {
       let tr = document.createElement('tr');
+      tr.className = 'border-b border-slate-800/80 hover:bg-slate-800/30';
+      let perd = calcularMinutos(c.llegada, c.salida);
+      
       tr.innerHTML = `
-        <td class="p-0.5"><input class="glass-input" value="${u.uni}" ${rol==='invitado'?'disabled':''} oninput="updateUni(${u.id},'uni',this.value)"></td>
-        <td class="p-0.5"><input type="number" class="glass-input" value="${u.tn}" ${rol==='invitado'?'disabled':''} oninput="updateUni(${u.id},'tn',parseFloat(this.value)||0)"></td>
-        <td class="p-0.5"><input type="time" class="glass-input p-0" value="${u.lleg}" ${rol==='invitado'?'disabled':''} oninput="updateUni(${u.id},'lleg',this.value)"></td>
-        <td class="p-0.5"><input type="time" class="glass-input p-0" value="${u.sal}" ${rol==='invitado'?'disabled':''} oninput="updateUni(${u.id},'sal',this.value)"></td>
-        <td class="p-0.5 text-center">${rol!=='invitado'?`<button onclick="borrarUnidad(${u.id})" class="text-red-400"><i class="fas fa-trash"></i></button>`:'-'}</td>
+        <td class="p-0.5"><input type="text" class="glass-input text-[10px]" value="${c.unidad}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
+        <td class="p-0.5"><input type="number" class="glass-input text-[10px]" value="${c.tn}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||0)"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.llegada}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.salida}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'salida', this.value)"></td>
+        <td class="p-0.5"><input type="number" class="glass-input text-[10px]" value="${c.jaulas}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'jaulas', parseFloat(this.value)||0)"></td>
+        <td class="p-0.5 text-yellow-400 font-bold text-center">${perd}m</td>
+        <td class="p-0.5 text-center">
+          ${rolActual !== 'invitado' ? `<button onclick="eliminarCamion(${c.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '-'}
+        </td>
       `;
-      tb.appendChild(tr);
+      contenedor.appendChild(tr);
     });
   }
 
-  function calcular() {
-    let ing = parseFloat(document.getElementById('ingreso').value)||0;
-    let rut = parseFloat(document.getElementById('ruta').value)||0;
-    let sal = parseFloat(document.getElementById('saldo').value)||0;
-    
-    document.getElementById('dispo').value = (ing + rut + sal).toFixed(2);
-    
-    let totalTn = unidades.reduce((a, b) => a + (parseFloat(b.tn)||0), 0);
-    document.getElementById('res-enviadas').innerText = totalTn.toFixed(2);
+  // CÁLCULOS MATEMÁTICOS EN TIEMPO REAL
+  function calcularTotalesGenerales() {
+    let ingreso = parseFloat(document.getElementById('ingreso-general').value) || 0;
+    let ruta = parseFloat(document.getElementById('ruta').value) || 0;
+    let saldo = parseFloat(document.getElementById('saldo').value) || 0;
 
-    let totalPerdido = unidades.reduce((a, b) => a + calcularMinutos(b.lleg, b.sal), 0);
-    document.getElementById('res-perdido').innerText = `${totalPerdido} min`;
+    // DISPO Automático = RUTA + SALDO + INGRESO
+    let dispoCalc = ruta + saldo + ingreso;
+    document.getElementById('dispo').value = dispoCalc.toFixed(2);
+
+    let tonsEnviadasTotal = camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0);
+    let tiempoPerdidoTotal = camiones.reduce((acc, c) => acc + calcularMinutos(c.llegada, c.salida), 0);
+    let saldoHora = saldo - tonsEnviadasTotal;
+    
+    let tnPrimeraLinea = camiones.length > 0 ? (parseFloat(camiones[0].tn) || 0) : 0;
+    let unidadesRequeridas = tnPrimeraLinea > 0 ? (saldoHora / tnPrimeraLinea) : 0;
+
+    document.getElementById('res-tons-enviadas').innerText = tonsEnviadasTotal.toFixed(2);
+    document.getElementById('res-falta-transporte').innerText = `${tiempoPerdidoTotal} min`;
+    document.getElementById('res-saldo-hora').innerText = saldoHora.toFixed(2);
+    document.getElementById('res-unidades-requeridas').innerText = unidadesRequeridas.toFixed(2);
   }
 
-  function guardarEnFirebase() {
-    if (rol === 'invitado') return;
-    if (!db) return alert("Ingresa tus credenciales de Firebase en el código.");
+  function limpiarFormularioCompleto() {
+    document.getElementById('fecha').valueAsDate = new Date();
+    document.getElementById('ingreso-general').value = '';
+    document.getElementById('finca').value = '';
+    document.getElementById('codigo-finca').value = '';
+    document.getElementById('ruta').value = '';
+    document.getElementById('saldo').value = '';
+    document.getElementById('dispo').value = '';
+    document.getElementById('input-tons-campo').value = '';
+    document.getElementById('obs').value = '';
+    
+    camiones = [];
+    renderizarCamiones();
+    calcularTotalesGenerales();
+  }
+
+  function sincronizarBorrador() {
+    if (rolActual === 'invitado') return;
+    let data = {
+      fecha: document.getElementById('fecha').value,
+      ingreso: document.getElementById('ingreso-general').value,
+      finca: document.getElementById('finca').value,
+      codigoFinca: document.getElementById('codigo-finca').value,
+      ruta: document.getElementById('ruta').value,
+      saldo: document.getElementById('saldo').value,
+      dispo: document.getElementById('dispo').value,
+      tonsCampo: document.getElementById('input-tons-campo').value,
+      obs: document.getElementById('obs').value,
+      camiones: camiones
+    };
+    localStorage.setItem('logistica_draft', JSON.stringify(data));
+    alert("¡Borrador guardado localmente!");
+  }
+
+  function cargarBorradorLocal() {
+    let draft = localStorage.getItem('logistica_draft');
+    if(draft) {
+      let d = JSON.parse(draft);
+      document.getElementById('fecha').value = d.fecha || '';
+      document.getElementById('ingreso-general').value = d.ingreso || '';
+      document.getElementById('finca').value = d.finca || '';
+      document.getElementById('codigo-finca').value = d.codigoFinca || '';
+      document.getElementById('ruta').value = d.ruta || '';
+      document.getElementById('saldo').value = d.saldo || '';
+      document.getElementById('dispo').value = d.dispo || '';
+      document.getElementById('input-tons-campo').value = d.tonsCampo || '';
+      document.getElementById('obs').value = d.obs || '';
+      camiones = d.camiones || [];
+      renderizarCamiones();
+      calcularTotalesGenerales();
+    }
+  }
+
+  // GUARDAR EN BASE DE DATOS
+  function confirmarGuardarTurno() {
+    if (rolActual === 'invitado') return;
+    if(!confirm("¿Confirmas guardar el turno completo en la Base de Datos?")) return;
+
+    if(!db) {
+      alert("Atención: Firebase no está configurado aún con las claves API.");
+      return;
+    }
+
+    let btnGuardar = document.getElementById('btn-guardar');
+    btnGuardar.disabled = true;
+    btnGuardar.innerText = "Guardando...";
+
+    let tonsEnviadasTotal = camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0);
+    let tiempoPerdidoTotal = camiones.reduce((acc, c) => acc + calcularMinutos(c.llegada, c.salida), 0);
 
     let payload = {
-      fecha: document.getElementById('fecha').value,
-      finca: document.getElementById('finca').value || 'Sin Nombre',
-      codigo: document.getElementById('codigo').value || 'S/C',
-      ingreso: parseFloat(document.getElementById('ingreso').value) || 0,
+      fecha: document.getElementById('fecha').value || new Date().toISOString().split('T')[0],
+      ingreso: parseFloat(document.getElementById('ingreso-general').value) || 0,
+      finca: document.getElementById('finca').value || 'N/D',
+      codigoFinca: document.getElementById('codigo-finca').value || 'N/D',
       ruta: parseFloat(document.getElementById('ruta').value) || 0,
       saldo: parseFloat(document.getElementById('saldo').value) || 0,
       dispo: parseFloat(document.getElementById('dispo').value) || 0,
-      tonsEnviadas: parseFloat(document.getElementById('res-enviadas').innerText) || 0,
-      tiempoPerdidoTotal: document.getElementById('res-perdido').innerText,
-      unidades: unidades,
+      tonsCampo: parseFloat(document.getElementById('input-tons-campo').value) || 0,
+      tonsEnviadas: tonsEnviadasTotal,
+      tiempoPerdidoTotal: tiempoPerdidoTotal,
+      unidadesRequeridas: parseFloat(document.getElementById('res-unidades-requeridas').innerText) || 0,
+      totalUnidades: camiones.length,
+      obs: document.getElementById('obs').value || '',
+      camiones: camiones,
       timestamp: Date.now()
     };
 
-    db.ref('turnos').push().set(payload)
+    const nuevoRegistroRef = db.ref('registros').push();
+    nuevoRegistroRef.set(payload)
       .then(() => {
-        alert("¡Turno guardado con éxito!");
-        unidades = [];
-        renderTabla();
-        calcular();
+        alert("Turno guardado con éxito en la Base de Datos.");
+        localStorage.removeItem('logistica_draft');
+        limpiarFormularioCompleto();
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
       })
-      .catch(err => alert("Error: " + err.message));
+      .catch((err) => {
+        alert("Error al guardar: " + err.message);
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
+      });
   }
 
-  function buscarEnFirebase() {
-    let q = document.getElementById('buscar-query').value.toLowerCase().trim();
-    let resContainer = document.getElementById('resultados-busqueda');
-    if (!q) { resContainer.classList.add('hidden'); return; }
+  function cerrarAdminPanel() {
+    document.getElementById('admin-panel').classList.add('hidden');
+  }
 
-    if (!db) return alert("Firebase no configurado.");
+  function cerrarSesionAdmin() {
+    cerrarAdminPanel();
+    seleccionarRol('invitado');
+    document.getElementById('select-rol').value = 'invitado';
+    alert("Sesión de administración cerrada.");
+  }
 
-    db.ref('turnos').once('value', snapshot => {
-      let data = snapshot.val();
-      resContainer.innerHTML = '';
-      resContainer.classList.remove('hidden');
+  function guardarNuevasPasswords() {
+    let mod = document.getElementById('nueva-pass-mod').value;
+    let adm = document.getElementById('nueva-pass-admin').value;
+    if (mod) { passModerador = mod; localStorage.setItem('passMod', mod); }
+    if (adm) { passAdmin = adm; localStorage.setItem('passAdmin', adm); }
+    alert("Contraseñas actualizadas correctamente.");
+  }
 
-      if (!data) {
-        resContainer.innerHTML = '<p class="text-[10px] text-gray-500">Sin registros.</p>';
-        return;
-      }
+  function aplicarFondoArchivo() {
+    let fileInput = document.getElementById('bg-file-input');
+    if (fileInput.files && fileInput.files[0]) {
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        let base64 = e.target.result;
+        document.body.style.backgroundImage = `linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('${base64}')`;
+        localStorage.setItem('customBg', base64);
+        alert("Fondo personalizado cargado.");
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+  }
 
-      let encontrados = 0;
-      Object.values(data).forEach(t => {
-        let finca = String(t.finca || '').toLowerCase();
-        let codigo = String(t.codigo || '').toLowerCase();
-        let fecha = String(t.fecha || '').toLowerCase();
+  function quitarFondoCustom() {
+    localStorage.removeItem('customBg');
+    document.body.style.backgroundImage = "linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop')";
+    alert("Fondo restaurado al original.");
+  }
 
-        if (finca.includes(q) || codigo.includes(q) || fecha.includes(q)) {
-          encontrados++;
-          let item = document.createElement('div');
-          item.className = 'bg-slate-800 p-2 rounded text-[10px] space-y-0.5 border border-slate-700';
-          item.innerHTML = `
-            <div class="flex justify-between font-bold text-sky-300">
-              <span>${t.finca} (${t.codigo})</span>
-              <span>${t.fecha}</span>
-            </div>
-            <div class="flex justify-between text-gray-400">
-              <span>TN: ${t.tonsEnviadas}</span>
-              <span>T.Perdido: ${t.tiempoPerdidoTotal}</span>
-              <span>Uni: ${t.unidades ? t.unidades.length : 0}</span>
-            </div>
-          `;
-          resContainer.appendChild(item);
+  function abrirBuscadorFincas() {
+    document.getElementById('modal-buscador').classList.remove('hidden');
+  }
+
+  function cerrarBuscadorFincas() {
+    document.getElementById('modal-buscador').classList.add('hidden');
+  }
+
+  function ejecutarBusquedaFinca() {
+    let query = document.getElementById('input-busca-finca').value.trim().toLowerCase();
+    if(!query) return alert("Ingrese un parámetro a buscar.");
+
+    let cont = document.getElementById('resultado-busqueda');
+    cont.innerHTML = '<p class="text-sky-400 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando registros...</p>';
+
+    if(!db) {
+      cont.innerHTML = '<p class="text-red-400 text-center py-4">Firebase no está configurado todavía.</p>';
+      return;
+    }
+
+    db.ref('registros').once('value')
+      .then((snapshot) => {
+        cont.innerHTML = '';
+        if(!snapshot.exists()) {
+          cont.innerHTML = '<p class="text-gray-400 text-center py-4">No se encontraron turnos guardados.</p>';
+          return;
         }
-      });
 
-      if (encontrados === 0) {
-        resContainer.innerHTML = '<p class="text-[10px] text-gray-500">No hay coincidencias.</p>';
-      }
-    });
+        let hallados = 0;
+        snapshot.forEach((child) => {
+          let r = child.val();
+          let finca = String(r.finca || '').toLowerCase();
+          let codigo = String(r.codigoFinca || '').toLowerCase();
+          let fecha = String(r.fecha || '').toLowerCase();
+
+          if(finca.includes(query) || codigo.includes(query) || fecha.includes(query)) {
+            hallados++;
+            let div = document.createElement('div');
+            div.className = 'bg-slate-900/80 p-3 rounded-xl border border-slate-700 space-y-1';
+            div.innerHTML = `
+              <div class="flex justify-between font-bold text-sky-400 border-b border-slate-700/60 pb-1">
+                <span>${r.finca} (${r.codigoFinca})</span>
+                <span>${r.fecha}</span>
+              </div>
+              <div class="grid grid-cols-2 gap-1 text-[10px] text-gray-300 pt-1">
+                <div>Ingreso / Ruta: <b>${r.ingreso} / ${r.ruta}</b></div>
+                <div>Dispo / Saldo: <b>${r.dispo} / ${r.saldo}</b></div>
+                <div>Tons Enviadas: <b class="text-green-400">${r.tonsEnviadas}</b></div>
+                <div>T. Perdido: <b class="text-yellow-400">${r.tiempoPerdidoTotal} min</b></div>
+                <div>Unidades Req.: <b class="text-pink-400">${r.unidadesRequeridas}</b></div>
+                <div>Total Unidades: <b>${r.totalUnidades}</b></div>
+              </div>
+              ${r.obs ? `<div class="text-[9px] text-gray-400 italic pt-1 border-t border-slate-800">Obs: ${r.obs}</div>` : ''}
+            `;
+            cont.appendChild(div);
+          }
+        });
+
+        if(hallados === 0) {
+          cont.innerHTML = '<p class="text-gray-400 text-center py-4">No se encontraron turnos guardados.</p>';
+        }
+      })
+      .catch((err) => {
+        cont.innerHTML = `<p class="text-red-400 text-center py-4">Error al buscar: ${err.message}</p>`;
+      });
   }
 </script>
 </body>
 </html>
+
