@@ -506,38 +506,43 @@ const analytics = getAnalytics(app);
 
   // GUARDAR EN BASE DE DATOS
   function confirmarGuardarTurno() {
-    if (rolActual === 'invitado') return;
-    if(!confirm("¿Confirmas guardar el turno completo en la Base de Datos?")) return;
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzd7kD-WaKtiO3zkRVT9xWeSFfZHb-UdlWOVHRA42ud4lniV-ovFdG5ZCnEANSqxWu88g/exec";
 
-    if(!db) {
-      alert("Atención: Firebase no está configurado aún con las claves API.");
-      return;
-    }
+function confirmarGuardarTurno() {
+  if (rolActual === 'invitado') return;
+  if (!confirm("¿Confirmas guardar el turno en Google Sheets?")) return;
 
-    let btnGuardar = document.getElementById('btn-guardar');
-    btnGuardar.disabled = true;
-    btnGuardar.innerText = "Guardando...";
+  let payload = {
+    fecha: document.getElementById('fecha').value,
+    finca: document.getElementById('finca').value,
+    codigoFinca: document.getElementById('codigo-finca').value,
+    ingreso: parseFloat(document.getElementById('ingreso-general').value) || 0,
+    ruta: parseFloat(document.getElementById('ruta').value) || 0,
+    saldo: parseFloat(document.getElementById('saldo').value) || 0,
+    dispo: parseFloat(document.getElementById('dispo').value) || 0,
+    tonsCampo: parseFloat(document.getElementById('input-tons-campo').value) || 0,
+    tonsEnviadas: camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0),
+    unidadesRequeridas: parseFloat(document.getElementById('res-unidades-requeridas').innerText) || 0,
+    totalUnidades: camiones.length,
+    tiempoPerdidoTotal: camiones.reduce((acc, c) => acc + calcularMinutos(c.llegada, c.salida), 0),
+    obs: document.getElementById('obs').value,
+    camiones: camiones
+  };
 
-    let tonsEnviadasTotal = camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0);
-    let tiempoPerdidoTotal = camiones.reduce((acc, c) => acc + calcularMinutos(c.llegada, c.salida), 0);
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    alert("¡Turno enviado a Google Sheets exitosamente!");
+    localStorage.removeItem('logistica_draft');
+    location.reload();
+  })
+  .catch(err => alert("Error al enviar: " + err.message));
+}
 
-    let payload = {
-      fecha: document.getElementById('fecha').value || new Date().toISOString().split('T')[0],
-      ingreso: parseFloat(document.getElementById('ingreso-general').value) || 0,
-      finca: document.getElementById('finca').value || 'N/D',
-      codigoFinca: document.getElementById('codigo-finca').value || 'N/D',
-      ruta: parseFloat(document.getElementById('ruta').value) || 0,
-      saldo: parseFloat(document.getElementById('saldo').value) || 0,
-      dispo: parseFloat(document.getElementById('dispo').value) || 0,
-      tonsCampo: parseFloat(document.getElementById('input-tons-campo').value) || 0,
-      tonsEnviadas: tonsEnviadasTotal,
-      tiempoPerdidoTotal: tiempoPerdidoTotal,
-      unidadesRequeridas: parseFloat(document.getElementById('res-unidades-requeridas').innerText) || 0,
-      totalUnidades: camiones.length,
-      obs: document.getElementById('obs').value || '',
-      camiones: camiones,
-      timestamp: Date.now()
-    };
 
     const nuevoRegistroRef = db.ref('registros').push();
     nuevoRegistroRef.set(payload)
