@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>Logística APK Pro</title>
+  <title>Logística Movil Pro</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    body {
+    /* Tema Oscuro (Predeterminado) */
+    body.theme-dark {
       background-color: #07090e;
       color: #e2e8f0;
       background-image: linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
@@ -15,37 +16,78 @@
       background-position: center;
       min-height: 100vh;
     }
-    .glass {
+    body.theme-dark .glass {
       background: rgba(15, 23, 42, 0.75);
       backdrop-filter: blur(12px);
       border: 1px solid rgba(56, 189, 248, 0.15);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
-    .glass-input {
+    body.theme-dark .glass-input {
       background: rgba(30, 41, 59, 0.6);
       border: 1px solid #334155;
       color: white;
       border-radius: 6px;
-      padding: 3px 6px;
+      padding: 3px 4px;
       width: 100%;
       font-size: 0.75rem;
     }
-    .glass-input:focus {
+    body.theme-dark .glass-input:focus {
       outline: none;
       border-color: #38bdf8;
       box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
     }
+
+    /* Tema Claro - Colores de Alto Contraste */
+    body.theme-light {
+      background-color: #f8fafc;
+      color: #0f172a;
+      background-image: linear-gradient(rgba(248,250,252,0.88), rgba(248,250,252,0.88)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      min-height: 100vh;
+    }
+    body.theme-light .glass {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(2, 132, 199, 0.3);
+      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
+    }
+    body.theme-light .glass-input {
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      color: #0284c7;
+      font-weight: 700;
+      border-radius: 6px;
+      padding: 3px 4px;
+      width: 100%;
+      font-size: 0.75rem;
+    }
+    body.theme-light .glass-input:focus {
+      outline: none;
+      border-color: #0284c7;
+      box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
+    }
+    
+    /* Resaltados de números para Tema Claro */
+    body.theme-light .text-sky-400, body.theme-light .text-sky-300 { color: #0284c7 !important; }
+    body.theme-light .text-gray-400 { color: #475569 !important; }
+    body.theme-light .text-green-300, body.theme-light .text-green-400 { color: #15803d !important; font-weight: 800; }
+    body.theme-light .text-yellow-300, body.theme-light .text-yellow-400 { color: #b45309 !important; font-weight: 800; }
+    body.theme-light .text-purple-300, body.theme-light .text-purple-400 { color: #6b21a8 !important; font-weight: 800; }
+    body.theme-light .text-pink-300, body.theme-light .text-pink-400 { color: #be185d !important; font-weight: 800; }
+    body.theme-light .bg-slate-800 { background-color: #e2e8f0 !important; color: #0f172a !important; }
+    body.theme-light .bg-slate-900\/50 { background-color: rgba(226, 232, 240, 0.85) !important; }
+
     .neon-text {
-      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
-  <!-- SDK de Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
-<body class="p-2 pb-20">
+<body class="p-2 pb-20 theme-dark" id="app-body">
 
   <!-- MODAL DE SELECCIÓN DE ROL Y AUTENTICACIÓN -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
@@ -55,13 +97,13 @@
       <p id="modal-desc" class="text-xs text-gray-400">Ingrese la contraseña para continuar.</p>
       <input type="password" id="pass-input" class="glass-input text-center text-sm py-2" placeholder="Contraseña">
       <div class="flex gap-2 pt-2">
-        <button type="button" onclick="cerrarLogin()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold">Cancelar</button>
-        <button type="button" onclick="procesarAutenticacion()" class="w-1/2 bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
+        <button type="button" onclick="cerrarLogin()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold text-white">Cancelar</button>
+        <button type="button" onclick="procesarAutenticacion()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
       </div>
     </div>
   </div>
 
-  <!-- PANEL DE ADMINISTRACIÓN COMPLETO -->
+  <!-- PANEL DE ADMINISTRACIÓN -->
   <div id="admin-panel" class="fixed inset-x-2 top-2 z-40 glass p-4 rounded-2xl hidden border-sky-500/40 max-h-[95vh] overflow-y-auto no-scrollbar">
     <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
       <h3 class="font-bold text-sky-400 text-sm"><i class="fas fa-cogs mr-2"></i>Panel de Administración</h3>
@@ -69,6 +111,14 @@
     </div>
     
     <div class="space-y-4 text-xs">
+      <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700">
+        <label class="block text-sky-300 font-bold mb-2">Tema de la Interfaz</label>
+        <select id="select-tema-admin" onchange="cambiarTemaVisual(this.value)" class="glass-input bg-slate-800 font-bold py-1">
+          <option value="dark">🌙 Modo Oscuro</option>
+          <option value="light">☀️ Modo Claro</option>
+        </select>
+      </div>
+
       <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700">
         <label class="block text-sky-300 font-bold mb-2">Gestión de Contraseñas</label>
         <div class="space-y-2">
@@ -89,7 +139,7 @@
         <input type="file" id="bg-file-input" accept="image/*" class="glass-input mb-2 text-[10px]">
         <div class="flex gap-2">
           <button onclick="aplicarFondoArchivo()" class="w-1/2 bg-blue-600 hover:bg-blue-500 py-1.5 rounded text-white font-bold">Subir Imagen</button>
-          <button onclick="quitarFondoCustom()" class="w-1/2 bg-red-900/60 hover:bg-red-800 py-1.5 rounded text-white font-bold">Restaurar Original</button>
+          <button onclick="quitarFondoCustom()" class="w-1/2 bg-red-900/60 hover:bg-red-800 py-1.5 rounded text-red font-bold">Restaurar Original</button>
         </div>
       </div>
       
@@ -125,10 +175,13 @@
     
     <div class="flex justify-between items-center glass p-3 rounded-2xl">
       <div>
-        <h1 class="font-extrabold text-sm tracking-wider text-sky-400 neon-text">LOGÍSTICA PRO</h1>
+        <h1 class="font-extrabold text-sm tracking-wider text-sky-400 neon-text">LOGÍSTICA Movil PRO</h1>
         <p class="text-[10px] text-gray-400">Control de Turnos y Unidades</p>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5">
+        <button id="btn-toggle-tema-quick" onclick="alternarTemaRapido()" class="glass-input px-2 py-1 text-xs font-bold hidden" title="Cambiar Tema">
+          🌙
+        </button>
         <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 border-sky-500/40">
           <option value="invitado">👁️ Invitado</option>
           <option value="moderador">✏️ Moderador</option>
@@ -181,29 +234,25 @@
 
     <!-- TARJETAS DE INDICADORES -->
     <div class="grid grid-cols-2 gap-2">
-      <div class="glass p-2.5 rounded-xl border-l-4 border-sky-400">
-        <label class="text-[9px] text-gray-400 block">Tons Campo (Manual) 🌾</label>
-        <input type="number" id="input-tons-campo" class="glass-input campo-editable font-bold text-sky-200" placeholder="0" oninput="calcularTotalesGenerales()">
-      </div>
-      <div class="glass p-2.5 rounded-xl border-l-4 border-green-400">
+      <div class="glass p-2.5 rounded-xl border-l-4 border-green-500">
         <span class="text-[9px] text-gray-400 block">Tons Enviadas 📤</span>
         <span id="res-tons-enviadas" class="text-xs font-bold text-green-300">0.00</span>
       </div>
-      <div class="glass p-2.5 rounded-xl border-l-4 border-yellow-400">
+      <div class="glass p-2.5 rounded-xl border-l-4 border-yellow-500">
         <span class="text-[9px] text-gray-400 block">Tiempo Perdido Total 🕐</span>
         <span id="res-falta-transporte" class="text-xs font-bold text-yellow-300">0 min</span>
       </div>
-      <div class="glass p-2.5 rounded-xl border-l-4 border-purple-400">
+      <div class="glass p-2.5 rounded-xl border-l-4 border-purple-500">
         <span class="text-[9px] text-gray-400 block">Saldo Hora ⏰</span>
         <span id="res-saldo-hora" class="text-xs font-bold text-purple-300">0.00</span>
       </div>
-      <div class="glass p-2.5 rounded-xl border-l-4 border-pink-400 col-span-2">
+      <div class="glass p-2.5 rounded-xl border-l-4 border-pink-500">
         <span class="text-[9px] text-gray-400 block">Unidades Requeridas 🚛</span>
         <span id="res-unidades-requeridas" class="text-xs font-bold text-pink-300">0.00</span>
       </div>
     </div>
 
-    <!-- CONTROL DE UNIDADES COMPACTO -->
+    <!-- CONTROL DE UNIDADES COMPACTO CON ESPACIO OPTIMIZADO PARA UNI -->
     <div class="glass p-3 rounded-2xl space-y-2">
       <div class="flex justify-between items-center border-b border-slate-700 pb-1">
         <h2 class="text-[11px] font-bold uppercase tracking-wide text-sky-300">Control de Unidades</h2>
@@ -216,13 +265,13 @@
         <table class="w-full text-left border-collapse text-[10px]">
           <thead>
             <tr class="text-gray-400 border-b border-slate-700/60">
-              <th class="p-1">Uni.</th>
-              <th class="p-1">TN</th>
-              <th class="p-1">Lleg.</th>
-              <th class="p-1">Sal.</th>
-              <th class="p-1">Jau.</th>
-              <th class="p-1">Perd.</th>
-              <th class="p-1 text-center">Acc.</th>
+              <th class="p-0.5 w-[38%]">Unidad</th>
+              <th class="p-0.5 w-[13%]">TNS</th>
+              <th class="p-0.5 w-[12%]">Llegada</th>
+              <th class="p-0.5 w-[12%]">Salida</th>
+              <th class="p-0.5 w-[8%] text-center">Jau.</th>
+              <th class="p-0.5 w-[10%] text-center">Perd.</th>
+              <th class="p-0.5 w-[7%] text-center">Acc.</th>
             </tr>
           </thead>
           <tbody id="contenedor-camiones">
@@ -250,19 +299,17 @@
   </div>
 
 <script>
-  // CONFIGURACIÓN DE FIREBASE (Asegúrate de poner tus claves aquí)
   const firebaseConfig = {
-  apiKey: "AIzaSyBvx1odsjS6mX7-Bh9mf0Mjk5ZBm6l_PHM",
-  authDomain: "logistica-campo-transporte.firebaseapp.com",
-  databaseURL: "https://logistica-campo-transporte-default-rtdb.firebaseio.com",
-  projectId: "logistica-campo-transporte",
-  storageBucket: "logistica-campo-transporte.firebasestorage.app",
-  messagingSenderId: "893505736870",
-  appId: "1:893505736870:web:3f19c040f78f46a323e467",
-  measurementId: "G-WXK7F42LHK"
-};
+    apiKey: "AIzaSyBvx1odsjS6mX7-Bh9mf0Mjk5ZBm6l_PHM",
+    authDomain: "logistica-campo-transporte.firebaseapp.com",
+    databaseURL: "https://logistica-campo-transporte-default-rtdb.firebaseio.com",
+    projectId: "logistica-campo-transporte",
+    storageBucket: "logistica-campo-transporte.firebasestorage.app",
+    messagingSenderId: "893505736870",
+    appId: "1:893505736870:web:3f19c040f78f46a323e467",
+    measurementId: "G-WXK7F42LHK"
+  };
 
-  // Inicializar Firebase si los datos están colocados
   let db = null;
   try {
     if (firebaseConfig.apiKey !== "TU_API_KEY") {
@@ -270,7 +317,7 @@
       db = firebase.database();
     }
   } catch(e) {
-    console.log("Firebase pendiente de configurar claves:", e);
+    console.log("Firebase pendiente de configurar:", e);
   }
 
   let camiones = [];
@@ -281,6 +328,9 @@
   let passAdmin = localStorage.getItem('passAdmin') || 'zafra';
 
   window.onload = () => {
+    let savedTheme = localStorage.getItem('theme_preference') || 'dark';
+    cambiarTemaVisual(savedTheme);
+
     let customBg = localStorage.getItem('customBg');
     if(customBg) document.body.style.backgroundImage = `linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('${customBg}')`;
     
@@ -289,7 +339,33 @@
     aplicarPermisosRol('invitado');
   };
 
-  // GESTIÓN Y AUTENTICACIÓN DE ROLES
+  // GESTIÓN DE TEMAS VISUALES DE ALTO CONTRAS
+  function cambiarTemaVisual(tema) {
+    const body = document.getElementById('app-body');
+    const selectAdmin = document.getElementById('select-tema-admin');
+    const btnQuick = document.getElementById('btn-toggle-tema-quick');
+
+    if (tema === 'light') {
+      body.classList.remove('theme-dark');
+      body.classList.add('theme-light');
+      btnQuick.innerText = '☀️';
+    } else {
+      body.classList.remove('theme-light');
+      body.classList.add('theme-dark');
+      btnQuick.innerText = '🌙';
+    }
+    
+    if (selectAdmin) selectAdmin.value = tema;
+    localStorage.setItem('theme_preference', tema);
+  }
+
+  function alternarTemaRapido() {
+    let temaActual = localStorage.getItem('theme_preference') || 'dark';
+    let nuevoTema = temaActual === 'dark' ? 'light' : 'dark';
+    cambiarTemaVisual(nuevoTema);
+  }
+
+  // ROLES Y ACCESOS
   function seleccionarRol(nuevoRol) {
     if (nuevoRol === 'invitado') {
       rolActual = 'invitado';
@@ -329,13 +405,18 @@
     const editables = document.querySelectorAll('.campo-editable');
     const esInvitado = (rol === 'invitado');
 
-    editables.forEach(el => {
-      el.disabled = esInvitado;
-    });
+    editables.forEach(el => { el.disabled = esInvitado; });
 
     document.getElementById('btn-add-camion').style.display = esInvitado ? 'none' : 'block';
     document.getElementById('btn-borrador').disabled = esInvitado;
     document.getElementById('btn-guardar').disabled = esInvitado;
+
+    let btnQuickTema = document.getElementById('btn-toggle-tema-quick');
+    if (!esInvitado) {
+      btnQuickTema.classList.remove('hidden');
+    } else {
+      btnQuickTema.classList.add('hidden');
+    }
 
     if (esInvitado) {
       document.getElementById('btn-borrador').classList.add('opacity-50', 'cursor-not-allowed');
@@ -347,17 +428,17 @@
     renderizarCamiones();
   }
 
-  // TABLA DE UNIDADES
+  // AGREGAR / ELIMINAR FILAS
   function agregarFilaCamion(data = null) {
     if (rolActual === 'invitado') return;
     const id = Date.now() + Math.random();
     camiones.push({
       id: id,
       unidad: data ? data.unidad : '',
-      tn: data ? data.tn : 0,
+      tn: data ? data.tn : '',
       llegada: data ? data.llegada : '',
       salida: data ? data.salida : '',
-      jaulas: data ? data.jaulas : 0
+      jaulas: data ? data.jaulas : ''
     });
     renderizarCamiones();
     calcularTotalesGenerales();
@@ -370,21 +451,44 @@
     calcularTotalesGenerales();
   }
 
+  // ACTUALIZACIÓN DE VALORES EN MEMORIA SIN RE-RENDERIZAR (Evita perder foco de teclado)
   function actualizarCamion(id, campo, valor) {
     if (rolActual === 'invitado') return;
     let c = camiones.find(item => item.id === id);
     if(c) {
       c[campo] = valor;
+      
+      // Si cambian horas de llegada o salida se recalcula el tiempo perdido visual en la tabla
+      if(campo === 'llegada' || campo === 'salida') {
+        recalcularTiemposTabla();
+      }
+      
       calcularTotalesGenerales();
     }
   }
 
-  function calcularMinutos(llegada, salida) {
-    if(!llegada || !salida) return 0;
-    let [h1, m1] = llegada.split(':').map(Number);
-    let [h2, m2] = salida.split(':').map(Number);
+  function calcularTiempoPerdidoEntreCamiones(index) {
+    if (index === 0) return 0;
+    let salidaAnterior = camiones[index - 1].salida;
+    let llegadaActual = camiones[index].llegada;
+
+    if (!salidaAnterior || !llegadaActual) return 0;
+
+    let [h1, m1] = salidaAnterior.split(':').map(Number);
+    let [h2, m2] = llegadaActual.split(':').map(Number);
+    
     let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
     return diff > 0 ? diff : 0;
+  }
+
+  function recalcularTiemposTabla() {
+    camiones.forEach((c, i) => {
+      let elPerd = document.getElementById(`perd-${c.id}`);
+      if(elPerd) {
+        let minPerd = calcularTiempoPerdidoEntreCamiones(i);
+        elPerd.innerText = `${minPerd}m`;
+      }
+    });
   }
 
   function renderizarCamiones() {
@@ -398,18 +502,18 @@
 
     const disabledAttr = rolActual === 'invitado' ? 'disabled' : '';
 
-    camiones.forEach((c) => {
+    camiones.forEach((c, index) => {
       let tr = document.createElement('tr');
       tr.className = 'border-b border-slate-800/80 hover:bg-slate-800/30';
-      let perd = calcularMinutos(c.llegada, c.salida);
+      let perd = calcularTiempoPerdidoEntreCamiones(index);
       
       tr.innerHTML = `
-        <td class="p-0.5"><input type="text" class="glass-input text-[10px]" value="${c.unidad}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
-        <td class="p-0.5"><input type="number" class="glass-input text-[10px]" value="${c.tn}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||0)"></td>
-        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.llegada}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
-        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.salida}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'salida', this.value)"></td>
-        <td class="p-0.5"><input type="number" class="glass-input text-[10px]" value="${c.jaulas}" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'jaulas', parseFloat(this.value)||0)"></td>
-        <td class="p-0.5 text-yellow-400 font-bold text-center">${perd}m</td>
+        <td class="p-0.5"><input type="text" maxlength="10" class="glass-input text-[10px] font-bold" value="${c.unidad}" placeholder="42-400" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
+        <td class="p-0.5"><input type="number" maxlength="4" class="glass-input text-[10px]" value="${c.tn}" placeholder="150" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||'')"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.llegada}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.salida}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'salida', this.value)"></td>
+        <td class="p-0.5"><input type="number" maxlength="2" class="glass-input text-[10px] text-center" value="${c.jaulas}" placeholder="2" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'jaulas', parseFloat(this.value)||'')"></td>
+        <td class="p-0.5 text-yellow-400 font-bold text-center" id="perd-${c.id}">${perd}m</td>
         <td class="p-0.5 text-center">
           ${rolActual !== 'invitado' ? `<button onclick="eliminarCamion(${c.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '-'}
         </td>
@@ -418,20 +522,22 @@
     });
   }
 
-  // CÁLCULOS MATEMÁTICOS EN TIEMPO REAL
   function calcularTotalesGenerales() {
     let ingreso = parseFloat(document.getElementById('ingreso-general').value) || 0;
     let ruta = parseFloat(document.getElementById('ruta').value) || 0;
     let saldo = parseFloat(document.getElementById('saldo').value) || 0;
 
-    // DISPO Automático = RUTA + SALDO + INGRESO
     let dispoCalc = ruta + saldo + ingreso;
     document.getElementById('dispo').value = dispoCalc.toFixed(2);
 
     let tonsEnviadasTotal = camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0);
-    let tiempoPerdidoTotal = camiones.reduce((acc, c) => acc + calcularMinutos(c.llegada, c.salida), 0);
-    let saldoHora = saldo - tonsEnviadasTotal;
     
+    let tiempoPerdidoTotal = 0;
+    for (let i = 1; i < camiones.length; i++) {
+      tiempoPerdidoTotal += calcularTiempoPerdidoEntreCamiones(i);
+    }
+
+    let saldoHora = saldo - tonsEnviadasTotal;
     let tnPrimeraLinea = camiones.length > 0 ? (parseFloat(camiones[0].tn) || 0) : 0;
     let unidadesRequeridas = tnPrimeraLinea > 0 ? (saldoHora / tnPrimeraLinea) : 0;
 
@@ -449,7 +555,6 @@
     document.getElementById('ruta').value = '';
     document.getElementById('saldo').value = '';
     document.getElementById('dispo').value = '';
-    document.getElementById('input-tons-campo').value = '';
     document.getElementById('obs').value = '';
     
     camiones = [];
@@ -467,7 +572,6 @@
       ruta: document.getElementById('ruta').value,
       saldo: document.getElementById('saldo').value,
       dispo: document.getElementById('dispo').value,
-      tonsCampo: document.getElementById('input-tons-campo').value,
       obs: document.getElementById('obs').value,
       camiones: camiones
     };
@@ -486,7 +590,6 @@
       document.getElementById('ruta').value = d.ruta || '';
       document.getElementById('saldo').value = d.saldo || '';
       document.getElementById('dispo').value = d.dispo || '';
-      document.getElementById('input-tons-campo').value = d.tonsCampo || '';
       document.getElementById('obs').value = d.obs || '';
       camiones = d.camiones || [];
       renderizarCamiones();
@@ -494,7 +597,6 @@
     }
   }
 
-  // GUARDAR EN BASE DE DATOS
   function confirmarGuardarTurno() {
     if (rolActual === 'invitado') return;
     if(!confirm("¿Confirmas guardar el turno completo en la Base de Datos?")) return;
@@ -509,7 +611,10 @@
     btnGuardar.innerText = "Guardando...";
 
     let tonsEnviadasTotal = camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0);
-    let tiempoPerdidoTotal = camiones.reduce((acc, c) => acc + calcularMinutos(c.llegada, c.salida), 0);
+    let tiempoPerdidoTotal = 0;
+    for (let i = 1; i < camiones.length; i++) {
+      tiempoPerdidoTotal += calcularTiempoPerdidoEntreCamiones(i);
+    }
 
     let payload = {
       fecha: document.getElementById('fecha').value || new Date().toISOString().split('T')[0],
@@ -519,7 +624,6 @@
       ruta: parseFloat(document.getElementById('ruta').value) || 0,
       saldo: parseFloat(document.getElementById('saldo').value) || 0,
       dispo: parseFloat(document.getElementById('dispo').value) || 0,
-      tonsCampo: parseFloat(document.getElementById('input-tons-campo').value) || 0,
       tonsEnviadas: tonsEnviadasTotal,
       tiempoPerdidoTotal: tiempoPerdidoTotal,
       unidadesRequeridas: parseFloat(document.getElementById('res-unidades-requeridas').innerText) || 0,
