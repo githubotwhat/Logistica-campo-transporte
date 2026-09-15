@@ -6,8 +6,9 @@
   <title>Logística Móvil Pro</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <!-- Chart.js para gráficos interactivos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* Tema Oscuro (Predeterminado) */
     body.theme-dark {
       background-color: #07090e;
       color: #e2e8f0;
@@ -38,7 +39,7 @@
       box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
     }
 
-    /* Tema Claro - Colores de Alto Contraste */
+    /* ESTILOS TEMA CLARO - VISIBILIDAD OPTIMIZADA */
     body.theme-light {
       background-color: #f8fafc;
       color: #0f172a;
@@ -49,15 +50,15 @@
       min-height: 100vh;
     }
     body.theme-light .glass {
-      background: rgba(255, 255, 255, 0.92);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(2, 132, 199, 0.3);
-      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
+      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
     }
     body.theme-light .glass-input {
       background: #ffffff;
       border: 1px solid #94a3b8;
-      color: #0284c7;
+      color: #0f172a;
       font-weight: 700;
       border-radius: 6px;
       padding: 3px 4px;
@@ -70,15 +71,29 @@
       box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
     }
     
-    /* Resaltados de números para Tema Claro */
+    /* Adaptaciones de texto e interfaces para tema claro */
     body.theme-light .text-sky-400, body.theme-light .text-sky-300 { color: #0284c7 !important; }
-    body.theme-light .text-gray-400 { color: #475569 !important; }
+    body.theme-light .text-gray-400 { color: #334155 !important; font-weight: 600; }
     body.theme-light .text-green-300, body.theme-light .text-green-400 { color: #15803d !important; font-weight: 800; }
     body.theme-light .text-yellow-300, body.theme-light .text-yellow-400 { color: #b45309 !important; font-weight: 800; }
     body.theme-light .text-purple-300, body.theme-light .text-purple-400 { color: #6b21a8 !important; font-weight: 800; }
     body.theme-light .text-pink-300, body.theme-light .text-pink-400 { color: #be185d !important; font-weight: 800; }
-    body.theme-light .bg-slate-800 { background-color: #e2e8f0 !important; color: #0f172a !important; }
-    body.theme-light .bg-slate-900\/50 { background-color: rgba(226, 232, 240, 0.85) !important; }
+    body.theme-light .bg-slate-800 { background-color: #cbd5e1 !important; color: #0f172a !important; }
+    body.theme-light .bg-slate-900\/50, body.theme-light .bg-slate-900\/60, body.theme-light .bg-slate-900\/80 { background-color: rgba(241, 245, 249, 0.95) !important; }
+    body.theme-light h2, body.theme-light h3, body.theme-light h4 { color: #0f172a !important; }
+    body.theme-light .border-slate-700, body.theme-light .border-slate-800 { border-color: #cbd5e1 !important; }
+    
+    /* Botones específicos para Tema Claro */
+    body.theme-light #btn-borrador {
+      background-color: #e2e8f0 !important;
+      color: #0369a1 !important;
+      border-color: #0284c7 !important;
+    }
+    body.theme-light select#select-rol {
+      background-color: #ffffff !important;
+      color: #0284c7 !important;
+      border: 1px solid #0284c7 !important;
+    }
 
     .neon-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -89,7 +104,26 @@
 </head>
 <body class="p-2 pb-20 theme-dark" id="app-body">
 
-  <!-- MODAL DE AUTENTICACIÓN (Posicionado más arriba para no ocultarse con el teclado) -->
+  <!-- NOTIFICACIÓN / BANNER PERSONALIZADO (Reemplaza los alerts nativos) -->
+  <div id="toast-notificacion" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 glass px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none border border-sky-500 max-w-xs text-center">
+    <i id="toast-icon" class="fas fa-info-circle text-sky-400"></i>
+    <span id="toast-mensaje" class="text-white">Mensaje del sistema</span>
+  </div>
+
+  <!-- MODAL DE CONFIRMACIÓN PERSONALIZADO (Reemplaza el confirm nativo) -->
+  <div id="modal-confirmacion" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+    <div class="glass p-5 rounded-2xl w-full max-w-xs text-center space-y-4 border-sky-500/40">
+      <div class="text-yellow-400 text-3xl"><i class="fas fa-exclamation-triangle"></i></div>
+      <h3 id="confirm-titulo" class="text-sm font-bold tracking-wide">CONFIRMACIÓN</h3>
+      <p id="confirm-mensaje" class="text-xs text-gray-300">¿Desea realizar esta acción?</p>
+      <div class="flex gap-2 pt-2">
+        <button type="button" id="btn-confirm-cancelar" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold text-white">Cancelar</button>
+        <button type="button" id="btn-confirm-aceptar" class="w-1/2 bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-semibold text-white">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL AUTENTICACIÓN -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-start pt-16 justify-center p-4 bg-black/80 backdrop-blur-md hidden">
     <div class="glass p-6 rounded-2xl w-full max-w-sm text-center space-y-4">
       <div class="text-sky-400 text-3xl mb-1"><i class="fas fa-user-shield"></i></div>
@@ -170,15 +204,46 @@
     </div>
   </div>
 
+  <!-- MODAL DE GRÁFICOS Y ESTADÍSTICAS -->
+  <div id="modal-graficos" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/90 backdrop-blur-md hidden">
+    <div class="glass p-4 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-y-auto no-scrollbar space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
+        <h3 class="font-bold text-sky-400 text-sm flex items-center gap-2">
+          <i class="fas fa-chart-pie"></i> Dashboard de Rendimiento
+        </h3>
+        <button onclick="cerrarModalGraficos()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-lg"></i></button>
+      </div>
+
+      <!-- Gráfico 1: Tons por Finca -->
+      <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700">
+        <h4 class="text-xs font-bold text-sky-300 mb-2 text-center">Distribución de Toneladas por Finca</h4>
+        <div class="relative h-48 w-full flex items-center justify-center">
+          <canvas id="chartFincas"></canvas>
+        </div>
+      </div>
+
+      <!-- Gráfico 2: Eficiencia por Camión -->
+      <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700">
+        <h4 class="text-xs font-bold text-green-400 mb-2 text-center">Toneladas Transportadas por Camión</h4>
+        <div class="relative h-48 w-full flex items-center justify-center">
+          <canvas id="chartCamiones"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- APP CONTAINER -->
   <div class="max-w-md mx-auto space-y-3">
     
     <div class="flex justify-between items-center glass p-3 rounded-2xl">
       <div>
-        <h1 class="font-extrabold text-sm tracking-wider text-sky-400 neon-text">LOGÍSTICA Movil PRO</h1>
+        <h1 class="font-extrabold text-sm tracking-wider text-sky-400 neon-text">LOGÍSTICA MÓVIL PRO</h1>
         <p class="text-[10px] text-gray-400">Control de Turnos y Unidades</p>
       </div>
       <div class="flex items-center gap-1.5">
+        <button onclick="abrirModalGraficos()" class="glass-input px-2 py-1 text-xs font-bold text-sky-300 hover:text-sky-100" title="Ver Gráficas">
+          <i class="fas fa-chart-pie"></i>
+        </button>
         <button id="btn-toggle-tema-quick" onclick="alternarTemaRapido()" class="glass-input px-2 py-1 text-xs font-bold hidden" title="Cambiar Tema">🌙</button>
         <button id="btn-logout" onclick="cerrarSesionCompleta()" class="bg-red-600/80 hover:bg-red-600 text-white px-2 py-1 rounded text-xs hidden" title="Cerrar Sesión"><i class="fas fa-sign-out-alt"></i></button>
         <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 border-sky-500/40">
@@ -249,9 +314,13 @@
         <span class="text-[9px] text-gray-400 block">Unidades Requeridas 🚛</span>
         <span id="res-unidades-requeridas" class="text-xs font-bold text-pink-300">0.00</span>
       </div>
+      <div class="glass p-2.5 rounded-xl border-l-4 border-blue-500 col-span-2">
+        <span class="text-[9px] text-gray-400 block">Ritmo Estimado Despacho ⚡</span>
+        <span id="res-ritmo-despacho" class="text-xs font-bold text-sky-300">0.00 Tons/Hora</span>
+      </div>
     </div>
 
-    <!-- CONTROL DE UNIDADES COMPACTO -->
+    <!-- CONTROL DE UNIDADES -->
     <div class="glass p-3 rounded-2xl space-y-2">
       <div class="flex justify-between items-center border-b border-slate-700 pb-1">
         <h2 class="text-[11px] font-bold uppercase tracking-wide text-sky-300">Control de Unidades</h2>
@@ -264,13 +333,13 @@
         <table class="w-full text-left border-collapse text-[10px]">
           <thead>
             <tr class="text-gray-400 border-b border-slate-700/60">
-              <th class="p-0.5 w-[38%]">Unidad</th>
-              <th class="p-0.5 w-[13%]">TNS</th>
-              <th class="p-0.5 w-[12%]">Llegada</th>
-              <th class="p-0.5 w-[12%]">Salida</th>
-              <th class="p-0.5 w-[8%] text-center">Jau.</th>
+              <th class="p-0.5 w-[30%]">Unidad</th>
+              <th class="p-0.5 w-[12%]">TNS</th>
+              <th class="p-0.5 w-[11%]">Llegada</th>
+              <th class="p-0.5 w-[11%]">Salida</th>
+              <th class="p-0.5 w-[18%]">Estatus</th>
               <th class="p-0.5 w-[10%] text-center">Perd.</th>
-              <th class="p-0.5 w-[7%] text-center">Acc.</th>
+              <th class="p-0.5 w-[8%] text-center">Acc.</th>
             </tr>
           </thead>
           <tbody id="contenedor-camiones"></tbody>
@@ -278,13 +347,16 @@
       </div>
     </div>
 
-    <!-- OBSERVACIONES -->
-    <div class="glass p-2.5 rounded-2xl">
-      <label class="text-[9px] text-gray-400 block mb-1">OBSERVACIONES</label>
+    <!-- OBSERVACIONES Y REPORTES -->
+    <div class="glass p-2.5 rounded-2xl space-y-2">
+      <label class="text-[9px] text-gray-400 block">OBSERVACIONES</label>
       <textarea id="obs" class="glass-input h-14 resize-none campo-editable" placeholder="Notas del turno..."></textarea>
+      <button onclick="compartirWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-1.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2">
+        <i class="fab fa-whatsapp"></i> Generar Resumen WhatsApp
+      </button>
     </div>
 
-    <!-- BOTONES -->
+    <!-- BOTONES PRINCIPALES -->
     <div class="grid grid-cols-2 gap-2 pb-6">
       <button id="btn-borrador" onclick="sincronizarBorrador()" class="bg-slate-800 hover:bg-slate-700 text-sky-300 py-2.5 rounded-xl font-bold text-xs border border-sky-500/30 flex items-center justify-center gap-2">
         <i class="fas fa-save"></i> Borrador
@@ -314,27 +386,69 @@
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
     }
-  } catch(e) {
-    console.log("Firebase pendiente de configurar:", e);
-  }
+  } catch(e) { console.log(e); }
 
   let camiones = [];
   let rolActual = 'invitado';
   let targetRolPendiente = '';
 
+  let chartFincasInstance = null;
+  let chartCamionesInstance = null;
+
   let passModerador = localStorage.getItem('passMod') || 'editar';
   let passAdmin = localStorage.getItem('passAdmin') || 'zafra';
+
+  /* SISTEMA DE ALERTAS Y CONFIRMACIONES SIN URL (REEMPLAZA ALERT/CONFIRM) */
+  function mostrarNotificacion(msg, tipo = 'info') {
+    const toast = document.getElementById('toast-notificacion');
+    const txt = document.getElementById('toast-mensaje');
+    const icon = document.getElementById('toast-icon');
+
+    txt.innerText = msg;
+    if (tipo === 'error') {
+      icon.className = 'fas fa-exclamation-circle text-red-400';
+    } else if (tipo === 'success') {
+      icon.className = 'fas fa-check-circle text-green-400';
+    } else {
+      icon.className = 'fas fa-info-circle text-sky-400';
+    }
+
+    toast.classList.remove('opacity-0', 'pointer-events-none');
+    toast.classList.add('opacity-100');
+
+    setTimeout(() => {
+      toast.classList.remove('opacity-100');
+      toast.classList.add('opacity-0', 'pointer-events-none');
+    }, 3000);
+  }
+
+  function mostrarModalConfirmacion(titulo, mensaje, callbackAceptar) {
+    const modal = document.getElementById('modal-confirmacion');
+    document.getElementById('confirm-titulo').innerText = titulo;
+    document.getElementById('confirm-mensaje').innerText = mensaje;
+    
+    const btnAceptar = document.getElementById('btn-confirm-aceptar');
+    const btnCancelar = document.getElementById('btn-confirm-cancelar');
+
+    modal.classList.remove('hidden');
+
+    const ocultar = () => {
+      modal.classList.add('hidden');
+      btnAceptar.onclick = null;
+      btnCancelar.onclick = null;
+    };
+
+    btnAceptar.onclick = () => { ocultar(); callbackAceptar(); };
+    btnCancelar.onclick = ocultar;
+  }
 
   window.onload = () => {
     let savedTheme = localStorage.getItem('theme_preference') || 'dark';
     cambiarTemaVisual(savedTheme);
-
     aplicarFondoDesdeStorage();
-    
     document.getElementById('fecha').valueAsDate = new Date();
     cargarBorradorLocal();
 
-    // Recuperar sesión previa
     let sesionGuardada = localStorage.getItem('sesion_rol') || 'invitado';
     rolActual = sesionGuardada;
     document.getElementById('select-rol').value = rolActual;
@@ -346,9 +460,7 @@
     let temaActual = localStorage.getItem('theme_preference') || 'dark';
     let overlay = temaActual === 'light' ? 'rgba(248,250,252,0.65)' : 'rgba(7,9,14,0.6)';
     let defaultImg = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop';
-    
-    let urlUsar = customBg || defaultImg;
-    document.body.style.backgroundImage = `linear-gradient(${overlay}, ${overlay}), url("${urlUsar}")`;
+    document.body.style.backgroundImage = `linear-gradient(${overlay}, ${overlay}), url("${customBg || defaultImg}")`;
   }
 
   function cambiarTemaVisual(tema) {
@@ -365,7 +477,6 @@
       body.classList.add('theme-dark');
       btnQuick.innerText = '🌙';
     }
-    
     if (selectAdmin) selectAdmin.value = tema;
     localStorage.setItem('theme_preference', tema);
     aplicarFondoDesdeStorage();
@@ -373,8 +484,7 @@
 
   function alternarTemaRapido() {
     let temaActual = localStorage.getItem('theme_preference') || 'dark';
-    let nuevoTema = temaActual === 'dark' ? 'light' : 'dark';
-    cambiarTemaVisual(nuevoTema);
+    cambiarTemaVisual(temaActual === 'dark' ? 'light' : 'dark');
   }
 
   function seleccionarRol(nuevoRol) {
@@ -403,14 +513,16 @@
       localStorage.setItem('sesion_rol', 'moderador');
       cerrarLogin();
       aplicarPermisosRol('moderador');
+      mostrarNotificacion("Sesión de Moderador iniciada", "success");
     } else if (targetRolPendiente === 'admin' && inputPass === passAdmin) {
       rolActual = 'admin';
       localStorage.setItem('sesion_rol', 'admin');
       cerrarLogin();
       aplicarPermisosRol('admin');
       document.getElementById('admin-panel').classList.remove('hidden');
+      mostrarNotificacion("Sesión de Administrador iniciada", "success");
     } else {
-      alert("Contraseña incorrecta.");
+      mostrarNotificacion("Contraseña incorrecta", "error");
       cerrarLogin();
     }
   }
@@ -418,7 +530,6 @@
   function aplicarPermisosRol(rol) {
     const editables = document.querySelectorAll('.campo-editable');
     const esInvitado = (rol === 'invitado');
-
     editables.forEach(el => { el.disabled = esInvitado; });
 
     document.getElementById('btn-add-camion').style.display = esInvitado ? 'none' : 'block';
@@ -442,12 +553,69 @@
     renderizarCamiones();
   }
 
+  function renderizarCamiones() {
+    const contenedor = document.getElementById('contenedor-camiones');
+    contenedor.innerHTML = '';
+    
+    if(camiones.length === 0) {
+      contenedor.innerHTML = '<tr><td colspan="7" class="text-center text-[10px] text-gray-500 py-3">Sin unidades registradas.</td></tr>';
+      return;
+    }
+
+    const disabledAttr = rolActual === 'invitado' ? 'disabled' : '';
+
+    camiones.forEach((c, index) => {
+      let tr = document.createElement('tr');
+      
+      // CÁLCULO DE DEMORA INDIVIDUAL EN CARGA (> 45 MIN)
+      let esDemoraExcesiva = false;
+      let minCarga = 0;
+      if (c.llegada && c.salida) {
+        let [h1, m1] = c.llegada.split(':').map(Number);
+        let [h2, m2] = c.salida.split(':').map(Number);
+        minCarga = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (minCarga > 45) {
+          esDemoraExcesiva = true;
+        }
+      }
+
+      if (esDemoraExcesiva) {
+        tr.className = 'border-b border-red-500/50 bg-red-900/60 border-l-4 border-red-500 transition-colors duration-300';
+      } else {
+        tr.className = 'border-b border-slate-800/80 hover:bg-slate-800/30';
+      }
+
+      let perd = calcularTiempoPerdidoEntreCamiones(index);
+      
+      tr.innerHTML = `
+        <td class="p-0.5"><input type="text" maxlength="10" class="glass-input text-[10px] font-bold ${esDemoraExcesiva ? 'text-red-200' : ''}" value="${c.unidad}" placeholder="42-400" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
+        <td class="p-0.5"><input type="number" maxlength="4" class="glass-input text-[10px]" value="${c.tn}" placeholder="150" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||'')"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.llegada}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.salida}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'salida', this.value)"></td>
+        <td class="p-0.5">
+          <select class="glass-input text-[9px] font-bold bg-slate-800" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'estatus', this.value)">
+            <option value="espera" ${c.estatus === 'espera' ? 'selected' : ''}>⏳ Espera</option>
+            <option value="cargando" ${c.estatus === 'cargando' ? 'selected' : ''}>🚜 Cargando</option>
+            <option value="ruta" ${c.estatus === 'ruta' ? 'selected' : ''}>🚚 En Ruta</option>
+            <option value="falla" ${c.estatus === 'falla' ? 'selected' : ''}>⚠️ Falla</option>
+          </select>
+        </td>
+        <td class="p-0.5 ${perd > 30 ? 'text-red-500' : 'text-yellow-400'} font-bold text-center" id="perd-${c.id}">${perd}m</td>
+        <td class="p-0.5 text-center">
+          ${rolActual !== 'invitado' ? `<button onclick="eliminarCamion(${c.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '-'}
+        </td>
+      `;
+      contenedor.appendChild(tr);
+    });
+  }
+
   function cerrarSesionCompleta() {
     rolActual = 'invitado';
     localStorage.setItem('sesion_rol', 'invitado');
     document.getElementById('select-rol').value = 'invitado';
     cerrarAdminPanel();
     aplicarPermisosRol('invitado');
+    mostrarNotificacion("Sesión cerrada correctamente", "info");
   }
 
   function agregarFilaCamion(data = null) {
@@ -459,7 +627,7 @@
       tn: data ? data.tn : '',
       llegada: data ? data.llegada : '',
       salida: data ? data.salida : '',
-      jaulas: data ? data.jaulas : ''
+      estatus: data ? data.estatus : 'cargando'
     });
     renderizarCamiones();
     calcularTotalesGenerales();
@@ -477,7 +645,9 @@
     let c = camiones.find(item => item.id === id);
     if(c) {
       c[campo] = valor;
-      if(campo === 'llegada' || campo === 'salida') recalcularTiemposTabla();
+      if(campo === 'llegada' || campo === 'salida') {
+        renderizarCamiones();
+      }
       calcularTotalesGenerales();
     }
   }
@@ -494,47 +664,6 @@
     
     let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
     return diff > 0 ? diff : 0;
-  }
-
-  function recalcularTiemposTabla() {
-    camiones.forEach((c, i) => {
-      let elPerd = document.getElementById(`perd-${c.id}`);
-      if(elPerd) {
-        let minPerd = calcularTiempoPerdidoEntreCamiones(i);
-        elPerd.innerText = `${minPerd}m`;
-      }
-    });
-  }
-
-  function renderizarCamiones() {
-    const contenedor = document.getElementById('contenedor-camiones');
-    contenedor.innerHTML = '';
-    
-    if(camiones.length === 0) {
-      contenedor.innerHTML = '<tr><td colspan="7" class="text-center text-[10px] text-gray-500 py-3">Sin unidades registradas.</td></tr>';
-      return;
-    }
-
-    const disabledAttr = rolActual === 'invitado' ? 'disabled' : '';
-
-    camiones.forEach((c, index) => {
-      let tr = document.createElement('tr');
-      tr.className = 'border-b border-slate-800/80 hover:bg-slate-800/30';
-      let perd = calcularTiempoPerdidoEntreCamiones(index);
-      
-      tr.innerHTML = `
-        <td class="p-0.5"><input type="text" maxlength="10" class="glass-input text-[10px] font-bold" value="${c.unidad}" placeholder="42-400" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
-        <td class="p-0.5"><input type="number" maxlength="4" class="glass-input text-[10px]" value="${c.tn}" placeholder="150" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||'')"></td>
-        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.llegada}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
-        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.salida}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'salida', this.value)"></td>
-        <td class="p-0.5"><input type="number" maxlength="2" class="glass-input text-[10px] text-center" value="${c.jaulas}" placeholder="2" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'jaulas', parseFloat(this.value)||'')"></td>
-        <td class="p-0.5 text-yellow-400 font-bold text-center" id="perd-${c.id}">${perd}m</td>
-        <td class="p-0.5 text-center">
-          ${rolActual !== 'invitado' ? `<button onclick="eliminarCamion(${c.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '-'}
-        </td>
-      `;
-      contenedor.appendChild(tr);
-    });
   }
 
   function calcularTotalesGenerales() {
@@ -556,10 +685,111 @@
     let tnPrimeraLinea = camiones.length > 0 ? (parseFloat(camiones[0].tn) || 0) : 0;
     let unidadesRequeridas = tnPrimeraLinea > 0 ? (saldoHora / tnPrimeraLinea) : 0;
 
+    let ritmo = 0;
+    let camionesConHoras = camiones.filter(c => c.llegada && c.salida);
+
+    if (camionesConHoras.length >= 2) {
+      let [h1, m1] = camionesConHoras[0].llegada.split(':').map(Number);
+      let [h2, m2] = camionesConHoras[camionesConHoras.length - 1].salida.split(':').map(Number);
+      let minutosTotal = (h2 * 60 + m2) - (h1 * 60 + m1);
+      if (minutosTotal > 0) ritmo = (tonsEnviadasTotal / minutosTotal) * 60;
+    } else if (camionesConHoras.length === 1) {
+      let [h1, m1] = camionesConHoras[0].llegada.split(':').map(Number);
+      let [h2, m2] = camionesConHoras[0].salida.split(':').map(Number);
+      let minutos = (h2 * 60 + m2) - (h1 * 60 + m1);
+      if (minutos > 0) ritmo = ((parseFloat(camionesConHoras[0].tn) || 0) / minutos) * 60;
+    }
+
     document.getElementById('res-tons-enviadas').innerText = tonsEnviadasTotal.toFixed(2);
     document.getElementById('res-falta-transporte').innerText = `${tiempoPerdidoTotal} min`;
     document.getElementById('res-saldo-hora').innerText = saldoHora.toFixed(2);
     document.getElementById('res-unidades-requeridas').innerText = unidadesRequeridas.toFixed(2);
+    document.getElementById('res-ritmo-despacho').innerText = `${ritmo.toFixed(2)} Tons/Hora`;
+  }
+
+  function abrirModalGraficos() {
+    document.getElementById('modal-graficos').classList.remove('hidden');
+    renderizarGraficos();
+  }
+
+  function cerrarModalGraficos() {
+    document.getElementById('modal-graficos').classList.add('hidden');
+  }
+
+  function renderizarGraficos() {
+    let nombreFincaActual = document.getElementById('finca').value || 'Finca Actual';
+    let tonsTotalesFinca = parseFloat(document.getElementById('res-tons-enviadas').innerText) || 0;
+
+    const ctxFincas = document.getElementById('chartFincas').getContext('2d');
+    if (chartFincasInstance) chartFincasInstance.destroy();
+
+    chartFincasInstance = new Chart(ctxFincas, {
+      type: 'doughnut',
+      data: {
+        labels: [nombreFincaActual, 'Otras Fincas / Pendiente'],
+        datasets: [{
+          data: [tonsTotalesFinca, tonsTotalesFinca > 0 ? 0 : 1],
+          backgroundColor: ['#38bdf8', '#334155'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#0f172a', font: { size: 10 } } }
+        }
+      }
+    });
+
+    const ctxCamiones = document.getElementById('chartCamiones').getContext('2d');
+    if (chartCamionesInstance) chartCamionesInstance.destroy();
+
+    let labelsCamiones = camiones.map((c, i) => c.unidad ? `Unid. ${c.unidad}` : `Camión ${i+1}`);
+    let dataTonsCamiones = camiones.map(c => parseFloat(c.tn) || 0);
+
+    chartCamionesInstance = new Chart(ctxCamiones, {
+      type: 'bar',
+      data: {
+        labels: labelsCamiones.length > 0 ? labelsCamiones : ['Sin datos'],
+        datasets: [{
+          label: 'Toneladas Cargadas',
+          data: dataTonsCamiones.length > 0 ? dataTonsCamiones : [0],
+          backgroundColor: '#4ade80',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: '#475569', font: { size: 9 } } },
+          y: { ticks: { color: '#475569', font: { size: 9 } } }
+        },
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  function compartirWhatsApp() {
+    let finca = document.getElementById('finca').value || 'Sin Nombre';
+    let fecha = document.getElementById('fecha').value || '';
+    let tons = document.getElementById('res-tons-enviadas').innerText;
+    let perd = document.getElementById('res-falta-transporte').innerText;
+    let req = document.getElementById('res-unidades-requeridas').innerText;
+    let obs = document.getElementById('obs').value || 'Sin observaciones';
+
+    let texto = `📊 *RESUMEN DE LOGÍSTICA DE CAMPO*\n` +
+                `📅 *Fecha:* ${fecha}\n` +
+                `🏡 *Finca:* ${finca}\n` +
+                `📤 *Tons Enviadas:* ${tons}\n` +
+                `🕐 *Tiempo Perdido:* ${perd}\n` +
+                `🚛 *Unidades Requeridas:* ${req}\n` +
+                `📝 *Obs:* ${obs}`;
+
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
   }
 
   function limpiarFormularioCompleto() {
@@ -571,7 +801,6 @@
     document.getElementById('saldo').value = '';
     document.getElementById('dispo').value = '';
     document.getElementById('obs').value = '';
-    
     camiones = [];
     renderizarCamiones();
     calcularTotalesGenerales();
@@ -591,7 +820,7 @@
       camiones: camiones
     };
     localStorage.setItem('logistica_draft', JSON.stringify(data));
-    alert("¡Borrador guardado localmente!");
+    mostrarNotificacion("¡Borrador guardado localmente!", "success");
   }
 
   function cargarBorradorLocal() {
@@ -614,10 +843,17 @@
 
   function confirmarGuardarTurno() {
     if (rolActual === 'invitado') return;
-    if(!confirm("¿Confirmas guardar el turno completo en la Base de Datos?")) return;
 
+    mostrarModalConfirmacion(
+      "GUARDAR TURNO", 
+      "¿Confirmas guardar el turno completo en la Base de Datos?",
+      ejecutarGuardadoDB
+    );
+  }
+
+  function ejecutarGuardadoDB() {
     if(!db) {
-      alert("Atención: Firebase no está configurado aún con las claves API.");
+      mostrarNotificacion("Firebase no está configurado con las claves API", "error");
       return;
     }
 
@@ -648,32 +884,29 @@
       timestamp: Date.now()
     };
 
-    const nuevoRegistroRef = db.ref('registros').push();
-    nuevoRegistroRef.set(payload)
+    db.ref('registros').push().set(payload)
       .then(() => {
-        alert("Turno guardado con éxito en la Base de Datos.");
+        mostrarNotificacion("Turno guardado con éxito en la Base de Datos", "success");
         localStorage.removeItem('logistica_draft');
         limpiarFormularioCompleto();
         btnGuardar.disabled = false;
         btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
       })
       .catch((err) => {
-        alert("Error al guardar: " + err.message);
+        mostrarNotificacion("Error al guardar: " + err.message, "error");
         btnGuardar.disabled = false;
         btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
       });
   }
 
-  function cerrarAdminPanel() {
-    document.getElementById('admin-panel').classList.add('hidden');
-  }
+  function cerrarAdminPanel() { document.getElementById('admin-panel').classList.add('hidden'); }
 
   function guardarNuevasPasswords() {
     let mod = document.getElementById('nueva-pass-mod').value;
     let adm = document.getElementById('nueva-pass-admin').value;
     if (mod) { passModerador = mod; localStorage.setItem('passMod', mod); }
     if (adm) { passAdmin = adm; localStorage.setItem('passAdmin', adm); }
-    alert("Contraseñas actualizadas correctamente.");
+    mostrarNotificacion("Contraseñas actualizadas correctamente", "success");
   }
 
   function aplicarFondoArchivo() {
@@ -681,10 +914,9 @@
     if (fileInput.files && fileInput.files[0]) {
       let reader = new FileReader();
       reader.onload = function(e) {
-        let base64 = e.target.result;
-        localStorage.setItem('customBg', base64);
+        localStorage.setItem('customBg', e.target.result);
         aplicarFondoDesdeStorage();
-        alert("Fondo personalizado cargado.");
+        mostrarNotificacion("Fondo personalizado cargado", "success");
       };
       reader.readAsDataURL(fileInput.files[0]);
     }
@@ -693,20 +925,18 @@
   function quitarFondoCustom() {
     localStorage.removeItem('customBg');
     aplicarFondoDesdeStorage();
-    alert("Fondo restaurado al original.");
+    mostrarNotificacion("Fondo restaurado al original", "info");
   }
 
-  function abrirBuscadorFincas() {
-    document.getElementById('modal-buscador').classList.remove('hidden');
-  }
-
-  function cerrarBuscadorFincas() {
-    document.getElementById('modal-buscador').classList.add('hidden');
-  }
+  function abrirBuscadorFincas() { document.getElementById('modal-buscador').classList.remove('hidden'); }
+  function cerrarBuscadorFincas() { document.getElementById('modal-buscador').classList.add('hidden'); }
 
   function ejecutarBusquedaFinca() {
     let query = document.getElementById('input-busca-finca').value.trim().toLowerCase();
-    if(!query) return alert("Ingrese un parámetro a buscar.");
+    if(!query) {
+      mostrarNotificacion("Ingrese un parámetro a buscar", "error");
+      return;
+    }
 
     let cont = document.getElementById('resultado-busqueda');
     cont.innerHTML = '<p class="text-sky-400 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando registros...</p>';
