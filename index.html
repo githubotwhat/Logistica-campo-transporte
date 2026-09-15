@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>Logística Movil Pro</title>
+  <title>Logística Móvil Pro</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
@@ -11,19 +11,20 @@
     body.theme-dark {
       background-color: #07090e;
       color: #e2e8f0;
-      background-image: linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
+      background-image: linear-gradient(rgba(7,9,14,0.6), rgba(7,9,14,0.6)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
       background-size: cover;
       background-position: center;
+      background-attachment: fixed;
       min-height: 100vh;
     }
     body.theme-dark .glass {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(56, 189, 248, 0.15);
+      background: rgba(15, 23, 42, 0.80);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56, 189, 248, 0.2);
       box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     }
     body.theme-dark .glass-input {
-      background: rgba(30, 41, 59, 0.6);
+      background: rgba(30, 41, 59, 0.7);
       border: 1px solid #334155;
       color: white;
       border-radius: 6px;
@@ -41,14 +42,15 @@
     body.theme-light {
       background-color: #f8fafc;
       color: #0f172a;
-      background-image: linear-gradient(rgba(248,250,252,0.88), rgba(248,250,252,0.88)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
+      background-image: linear-gradient(rgba(248,250,252,0.65), rgba(248,250,252,0.65)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
       background-size: cover;
       background-position: center;
+      background-attachment: fixed;
       min-height: 100vh;
     }
     body.theme-light .glass {
       background: rgba(255, 255, 255, 0.92);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(10px);
       border: 1px solid rgba(2, 132, 199, 0.3);
       box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
     }
@@ -78,9 +80,7 @@
     body.theme-light .bg-slate-800 { background-color: #e2e8f0 !important; color: #0f172a !important; }
     body.theme-light .bg-slate-900\/50 { background-color: rgba(226, 232, 240, 0.85) !important; }
 
-    .neon-text {
-      text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
-    }
+    .neon-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -89,16 +89,16 @@
 </head>
 <body class="p-2 pb-20 theme-dark" id="app-body">
 
-  <!-- MODAL DE SELECCIÓN DE ROL Y AUTENTICACIÓN -->
-  <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+  <!-- MODAL DE AUTENTICACIÓN (Posicionado más arriba para no ocultarse con el teclado) -->
+  <div id="login-modal" class="fixed inset-0 z-50 flex items-start pt-16 justify-center p-4 bg-black/80 backdrop-blur-md hidden">
     <div class="glass p-6 rounded-2xl w-full max-w-sm text-center space-y-4">
-      <div class="text-sky-400 text-3xl mb-2"><i class="fas fa-user-shield"></i></div>
+      <div class="text-sky-400 text-3xl mb-1"><i class="fas fa-user-shield"></i></div>
       <h2 id="modal-titulo" class="text-lg font-bold tracking-wider">AUTENTICACIÓN</h2>
       <p id="modal-desc" class="text-xs text-gray-400">Ingrese la contraseña para continuar.</p>
       <input type="password" id="pass-input" class="glass-input text-center text-sm py-2" placeholder="Contraseña">
       <div class="flex gap-2 pt-2">
         <button type="button" onclick="cerrarLogin()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold text-white">Cancelar</button>
-        <button type="button" onclick="procesarAutenticacion()" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
+        <button type="button" onclick="procesarAutenticacion()" class="w-1/2 bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-semibold text-white">Ingresar</button>
       </div>
     </div>
   </div>
@@ -139,7 +139,7 @@
         <input type="file" id="bg-file-input" accept="image/*" class="glass-input mb-2 text-[10px]">
         <div class="flex gap-2">
           <button onclick="aplicarFondoArchivo()" class="w-1/2 bg-blue-600 hover:bg-blue-500 py-1.5 rounded text-white font-bold">Subir Imagen</button>
-          <button onclick="quitarFondoCustom()" class="w-1/2 bg-red-900/60 hover:bg-red-800 py-1.5 rounded text-red font-bold">Restaurar Original</button>
+          <button onclick="quitarFondoCustom()" class="w-1/2 bg-red-900/60 hover:bg-red-800 py-1.5 rounded text-white font-bold">Restaurar Original</button>
         </div>
       </div>
       
@@ -149,11 +149,11 @@
         </button>
       </div>
 
-      <button onclick="cerrarSesionAdmin()" class="w-full bg-red-600/80 hover:bg-red-600 py-2 rounded text-white font-bold">Cerrar Sesión Admin</button>
+      <button onclick="cerrarSesionCompleta()" class="w-full bg-red-600/80 hover:bg-red-600 py-2 rounded text-white font-bold">Cerrar Sesión Activa</button>
     </div>
   </div>
 
-  <!-- MODAL BUSCADOR POR FINCA / CÓDIGO / FECHA -->
+  <!-- MODAL BUSCADOR -->
   <div id="modal-buscador" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/90 backdrop-blur-md hidden">
     <div class="glass p-4 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
       <div class="flex justify-between items-center mb-3">
@@ -161,7 +161,7 @@
         <button onclick="cerrarBuscadorFincas()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
       </div>
       <div class="flex gap-2 mb-3">
-        <input type="text" id="input-busca-finca" class="glass-input" placeholder="Buscar por Finca, Código o Fecha (YYYY-MM-DD)...">
+        <input type="text" id="input-busca-finca" class="glass-input" placeholder="Buscar por Finca, Código o Fecha...">
         <button onclick="ejecutarBusquedaFinca()" class="bg-sky-600 px-4 py-1 rounded text-white font-bold">Buscar</button>
       </div>
       <div id="resultado-busqueda" class="overflow-y-auto space-y-2 flex-1 no-scrollbar text-xs">
@@ -179,9 +179,8 @@
         <p class="text-[10px] text-gray-400">Control de Turnos y Unidades</p>
       </div>
       <div class="flex items-center gap-1.5">
-        <button id="btn-toggle-tema-quick" onclick="alternarTemaRapido()" class="glass-input px-2 py-1 text-xs font-bold hidden" title="Cambiar Tema">
-          🌙
-        </button>
+        <button id="btn-toggle-tema-quick" onclick="alternarTemaRapido()" class="glass-input px-2 py-1 text-xs font-bold hidden" title="Cambiar Tema">🌙</button>
+        <button id="btn-logout" onclick="cerrarSesionCompleta()" class="bg-red-600/80 hover:bg-red-600 text-white px-2 py-1 rounded text-xs hidden" title="Cerrar Sesión"><i class="fas fa-sign-out-alt"></i></button>
         <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-800 text-[11px] font-bold py-1 px-2 text-sky-300 border-sky-500/40">
           <option value="invitado">👁️ Invitado</option>
           <option value="moderador">✏️ Moderador</option>
@@ -252,7 +251,7 @@
       </div>
     </div>
 
-    <!-- CONTROL DE UNIDADES COMPACTO CON ESPACIO OPTIMIZADO PARA UNI -->
+    <!-- CONTROL DE UNIDADES COMPACTO -->
     <div class="glass p-3 rounded-2xl space-y-2">
       <div class="flex justify-between items-center border-b border-slate-700 pb-1">
         <h2 class="text-[11px] font-bold uppercase tracking-wide text-sky-300">Control de Unidades</h2>
@@ -274,8 +273,7 @@
               <th class="p-0.5 w-[7%] text-center">Acc.</th>
             </tr>
           </thead>
-          <tbody id="contenedor-camiones">
-          </tbody>
+          <tbody id="contenedor-camiones"></tbody>
         </table>
       </div>
     </div>
@@ -331,15 +329,28 @@
     let savedTheme = localStorage.getItem('theme_preference') || 'dark';
     cambiarTemaVisual(savedTheme);
 
-    let customBg = localStorage.getItem('customBg');
-    if(customBg) document.body.style.backgroundImage = `linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('${customBg}')`;
+    aplicarFondoDesdeStorage();
     
     document.getElementById('fecha').valueAsDate = new Date();
     cargarBorradorLocal();
-    aplicarPermisosRol('invitado');
+
+    // Recuperar sesión previa
+    let sesionGuardada = localStorage.getItem('sesion_rol') || 'invitado';
+    rolActual = sesionGuardada;
+    document.getElementById('select-rol').value = rolActual;
+    aplicarPermisosRol(rolActual);
   };
 
-  // GESTIÓN DE TEMAS VISUALES DE ALTO CONTRAS
+  function aplicarFondoDesdeStorage() {
+    let customBg = localStorage.getItem('customBg');
+    let temaActual = localStorage.getItem('theme_preference') || 'dark';
+    let overlay = temaActual === 'light' ? 'rgba(248,250,252,0.65)' : 'rgba(7,9,14,0.6)';
+    let defaultImg = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop';
+    
+    let urlUsar = customBg || defaultImg;
+    document.body.style.backgroundImage = `linear-gradient(${overlay}, ${overlay}), url("${urlUsar}")`;
+  }
+
   function cambiarTemaVisual(tema) {
     const body = document.getElementById('app-body');
     const selectAdmin = document.getElementById('select-tema-admin');
@@ -357,6 +368,7 @@
     
     if (selectAdmin) selectAdmin.value = tema;
     localStorage.setItem('theme_preference', tema);
+    aplicarFondoDesdeStorage();
   }
 
   function alternarTemaRapido() {
@@ -365,11 +377,11 @@
     cambiarTemaVisual(nuevoTema);
   }
 
-  // ROLES Y ACCESOS
   function seleccionarRol(nuevoRol) {
     if (nuevoRol === 'invitado') {
-      rolActual = 'invitado';
-      aplicarPermisosRol('invitado');
+      cerrarSesionCompleta();
+    } else if (nuevoRol === rolActual) {
+      if (rolActual === 'admin') document.getElementById('admin-panel').classList.remove('hidden');
     } else {
       targetRolPendiente = nuevoRol;
       document.getElementById('modal-titulo').innerText = nuevoRol === 'admin' ? 'PANEL ADMINISTRADOR' : 'ACCESO MODERADOR';
@@ -388,10 +400,12 @@
     let inputPass = document.getElementById('pass-input').value;
     if (targetRolPendiente === 'moderador' && inputPass === passModerador) {
       rolActual = 'moderador';
+      localStorage.setItem('sesion_rol', 'moderador');
       cerrarLogin();
       aplicarPermisosRol('moderador');
     } else if (targetRolPendiente === 'admin' && inputPass === passAdmin) {
       rolActual = 'admin';
+      localStorage.setItem('sesion_rol', 'admin');
       cerrarLogin();
       aplicarPermisosRol('admin');
       document.getElementById('admin-panel').classList.remove('hidden');
@@ -412,23 +426,30 @@
     document.getElementById('btn-guardar').disabled = esInvitado;
 
     let btnQuickTema = document.getElementById('btn-toggle-tema-quick');
+    let btnLogout = document.getElementById('btn-logout');
+
     if (!esInvitado) {
       btnQuickTema.classList.remove('hidden');
-    } else {
-      btnQuickTema.classList.add('hidden');
-    }
-
-    if (esInvitado) {
-      document.getElementById('btn-borrador').classList.add('opacity-50', 'cursor-not-allowed');
-      document.getElementById('btn-guardar').classList.add('opacity-50', 'cursor-not-allowed');
-    } else {
+      btnLogout.classList.remove('hidden');
       document.getElementById('btn-borrador').classList.remove('opacity-50', 'cursor-not-allowed');
       document.getElementById('btn-guardar').classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+      btnQuickTema.classList.add('hidden');
+      btnLogout.classList.add('hidden');
+      document.getElementById('btn-borrador').classList.add('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-guardar').classList.add('opacity-50', 'cursor-not-allowed');
     }
     renderizarCamiones();
   }
 
-  // AGREGAR / ELIMINAR FILAS
+  function cerrarSesionCompleta() {
+    rolActual = 'invitado';
+    localStorage.setItem('sesion_rol', 'invitado');
+    document.getElementById('select-rol').value = 'invitado';
+    cerrarAdminPanel();
+    aplicarPermisosRol('invitado');
+  }
+
   function agregarFilaCamion(data = null) {
     if (rolActual === 'invitado') return;
     const id = Date.now() + Math.random();
@@ -451,18 +472,12 @@
     calcularTotalesGenerales();
   }
 
-  // ACTUALIZACIÓN DE VALORES EN MEMORIA SIN RE-RENDERIZAR (Evita perder foco de teclado)
   function actualizarCamion(id, campo, valor) {
     if (rolActual === 'invitado') return;
     let c = camiones.find(item => item.id === id);
     if(c) {
       c[campo] = valor;
-      
-      // Si cambian horas de llegada o salida se recalcula el tiempo perdido visual en la tabla
-      if(campo === 'llegada' || campo === 'salida') {
-        recalcularTiemposTabla();
-      }
-      
+      if(campo === 'llegada' || campo === 'salida') recalcularTiemposTabla();
       calcularTotalesGenerales();
     }
   }
@@ -653,13 +668,6 @@
     document.getElementById('admin-panel').classList.add('hidden');
   }
 
-  function cerrarSesionAdmin() {
-    cerrarAdminPanel();
-    seleccionarRol('invitado');
-    document.getElementById('select-rol').value = 'invitado';
-    alert("Sesión de administración cerrada.");
-  }
-
   function guardarNuevasPasswords() {
     let mod = document.getElementById('nueva-pass-mod').value;
     let adm = document.getElementById('nueva-pass-admin').value;
@@ -674,8 +682,8 @@
       let reader = new FileReader();
       reader.onload = function(e) {
         let base64 = e.target.result;
-        document.body.style.backgroundImage = `linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('${base64}')`;
         localStorage.setItem('customBg', base64);
+        aplicarFondoDesdeStorage();
         alert("Fondo personalizado cargado.");
       };
       reader.readAsDataURL(fileInput.files[0]);
@@ -684,7 +692,7 @@
 
   function quitarFondoCustom() {
     localStorage.removeItem('customBg');
-    document.body.style.backgroundImage = "linear-gradient(rgba(7,9,14,0.9), rgba(7,9,14,0.9)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop')";
+    aplicarFondoDesdeStorage();
     alert("Fondo restaurado al original.");
   }
 
@@ -757,4 +765,3 @@
 </script>
 </body>
 </html>
-
