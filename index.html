@@ -39,7 +39,6 @@
       box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
     }
 
-    /* ESTILOS TEMA CLARO - VISIBILIDAD OPTIMIZADA */
     body.theme-light {
       background-color: #f8fafc;
       color: #0f172a;
@@ -50,15 +49,15 @@
       min-height: 100vh;
     }
     body.theme-light .glass {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(2, 132, 199, 0.3);
-      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.12);
+      box-shadow: 0 8px 24px 0 rgba(0, 0, 0, 0.08);
     }
     body.theme-light .glass-input {
       background: #ffffff;
       border: 1px solid #94a3b8;
-      color: #0f172a;
+      color: #0284c7;
       font-weight: 700;
       border-radius: 6px;
       padding: 3px 4px;
@@ -71,29 +70,14 @@
       box-shadow: 0 0 8px rgba(2, 132, 199, 0.4);
     }
     
-    /* Adaptaciones de texto e interfaces para tema claro */
     body.theme-light .text-sky-400, body.theme-light .text-sky-300 { color: #0284c7 !important; }
-    body.theme-light .text-gray-400 { color: #334155 !important; font-weight: 600; }
+    body.theme-light .text-gray-400 { color: #475569 !important; }
     body.theme-light .text-green-300, body.theme-light .text-green-400 { color: #15803d !important; font-weight: 800; }
     body.theme-light .text-yellow-300, body.theme-light .text-yellow-400 { color: #b45309 !important; font-weight: 800; }
     body.theme-light .text-purple-300, body.theme-light .text-purple-400 { color: #6b21a8 !important; font-weight: 800; }
     body.theme-light .text-pink-300, body.theme-light .text-pink-400 { color: #be185d !important; font-weight: 800; }
-    body.theme-light .bg-slate-800 { background-color: #cbd5e1 !important; color: #0f172a !important; }
-    body.theme-light .bg-slate-900\/50, body.theme-light .bg-slate-900\/60, body.theme-light .bg-slate-900\/80 { background-color: rgba(241, 245, 249, 0.95) !important; }
-    body.theme-light h2, body.theme-light h3, body.theme-light h4 { color: #0f172a !important; }
-    body.theme-light .border-slate-700, body.theme-light .border-slate-800 { border-color: #cbd5e1 !important; }
-    
-    /* Botones específicos para Tema Claro */
-    body.theme-light #btn-borrador {
-      background-color: #e2e8f0 !important;
-      color: #0369a1 !important;
-      border-color: #0284c7 !important;
-    }
-    body.theme-light select#select-rol {
-      background-color: #ffffff !important;
-      color: #0284c7 !important;
-      border: 1px solid #0284c7 !important;
-    }
+    body.theme-light .bg-slate-800 { background-color: #e2e8f0 !important; color: #0f172a !important; }
+    body.theme-light .bg-slate-900\/50 { background-color: rgba(226, 232, 240, 0.85) !important; }
 
     .neon-text { text-shadow: 0 0 10px rgba(56, 189, 248, 0.4); }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -103,25 +87,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body class="p-2 pb-20 theme-dark" id="app-body">
-
-  <!-- NOTIFICACIÓN / BANNER PERSONALIZADO (Reemplaza los alerts nativos) -->
-  <div id="toast-notificacion" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 glass px-4 py-2.5 rounded-xl text-xs font-bold shadow-2xl flex items-center gap-2 transition-all duration-300 opacity-0 pointer-events-none border border-sky-500 max-w-xs text-center">
-    <i id="toast-icon" class="fas fa-info-circle text-sky-400"></i>
-    <span id="toast-mensaje" class="text-white">Mensaje del sistema</span>
-  </div>
-
-  <!-- MODAL DE CONFIRMACIÓN PERSONALIZADO (Reemplaza el confirm nativo) -->
-  <div id="modal-confirmacion" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
-    <div class="glass p-5 rounded-2xl w-full max-w-xs text-center space-y-4 border-sky-500/40">
-      <div class="text-yellow-400 text-3xl"><i class="fas fa-exclamation-triangle"></i></div>
-      <h3 id="confirm-titulo" class="text-sm font-bold tracking-wide">CONFIRMACIÓN</h3>
-      <p id="confirm-mensaje" class="text-xs text-gray-300">¿Desea realizar esta acción?</p>
-      <div class="flex gap-2 pt-2">
-        <button type="button" id="btn-confirm-cancelar" class="w-1/2 bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-semibold text-white">Cancelar</button>
-        <button type="button" id="btn-confirm-aceptar" class="w-1/2 bg-sky-600 hover:bg-sky-500 py-2 rounded-lg text-xs font-semibold text-white">Aceptar</button>
-      </div>
-    </div>
-  </div>
 
   <!-- MODAL AUTENTICACIÓN -->
   <div id="login-modal" class="fixed inset-0 z-50 flex items-start pt-16 justify-center p-4 bg-black/80 backdrop-blur-md hidden">
@@ -137,7 +102,7 @@
     </div>
   </div>
 
-  <!-- PANEL DE ADMINISTRACIÓN -->
+  <!-- PANEL DE ADMINISTRACIÓN / MODERACIÓN -->
   <div id="admin-panel" class="fixed inset-x-2 top-2 z-40 glass p-4 rounded-2xl hidden border-sky-500/40 max-h-[95vh] overflow-y-auto no-scrollbar">
     <div class="flex justify-between items-center mb-3 border-b border-slate-700 pb-2">
       <h3 class="font-bold text-sky-400 text-sm"><i class="fas fa-cogs mr-2"></i>Panel de Administración</h3>
@@ -174,6 +139,40 @@
         <div class="flex gap-2">
           <button onclick="aplicarFondoArchivo()" class="w-1/2 bg-blue-600 hover:bg-blue-500 py-1.5 rounded text-white font-bold">Subir Imagen</button>
           <button onclick="quitarFondoCustom()" class="w-1/2 bg-red-900/60 hover:bg-red-800 py-1.5 rounded text-white font-bold">Restaurar Original</button>
+        </div>
+      </div>
+
+      <!-- CONFIGURACIÓN REPORTE WHATSAPP DENTRO DE ADMINISTRACIÓN -->
+      <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 space-y-2">
+        <label class="block text-sky-300 font-bold mb-1">Configuración Reporte WhatsApp</label>
+        
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] text-gray-400">FRENTE</label>
+            <input type="text" id="wa-frente" class="glass-input campo-editable" value="Frente 1">
+          </div>
+          <div>
+            <label class="text-[9px] text-gray-400">TURNO</label>
+            <select id="wa-turno" class="glass-input bg-slate-800 text-[10px] font-bold">
+              <option value="Turno A 06:00 a 18:00">Turno A 06:00 a 18:00</option>
+              <option value="Turno B 18:00 a 06:00">Turno B 18:00 a 06:00</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-[9px] text-gray-400">EN PROCESO</label>
+            <input type="number" id="wa-proceso" class="glass-input campo-editable" placeholder="0" value="0">
+          </div>
+          <div>
+            <label class="text-[9px] text-gray-400">EN COLA</label>
+            <input type="number" id="wa-cola" class="glass-input campo-editable" placeholder="0" value="0">
+          </div>
+          <div>
+            <label class="text-[9px] text-gray-400">EN RUTA FRENTE</label>
+            <input type="text" id="wa-ruta-frente" class="glass-input campo-editable" placeholder="Ej: 42-400">
+          </div>
         </div>
       </div>
       
@@ -398,50 +397,6 @@
   let passModerador = localStorage.getItem('passMod') || 'editar';
   let passAdmin = localStorage.getItem('passAdmin') || 'zafra';
 
-  /* SISTEMA DE ALERTAS Y CONFIRMACIONES SIN URL (REEMPLAZA ALERT/CONFIRM) */
-  function mostrarNotificacion(msg, tipo = 'info') {
-    const toast = document.getElementById('toast-notificacion');
-    const txt = document.getElementById('toast-mensaje');
-    const icon = document.getElementById('toast-icon');
-
-    txt.innerText = msg;
-    if (tipo === 'error') {
-      icon.className = 'fas fa-exclamation-circle text-red-400';
-    } else if (tipo === 'success') {
-      icon.className = 'fas fa-check-circle text-green-400';
-    } else {
-      icon.className = 'fas fa-info-circle text-sky-400';
-    }
-
-    toast.classList.remove('opacity-0', 'pointer-events-none');
-    toast.classList.add('opacity-100');
-
-    setTimeout(() => {
-      toast.classList.remove('opacity-100');
-      toast.classList.add('opacity-0', 'pointer-events-none');
-    }, 3000);
-  }
-
-  function mostrarModalConfirmacion(titulo, mensaje, callbackAceptar) {
-    const modal = document.getElementById('modal-confirmacion');
-    document.getElementById('confirm-titulo').innerText = titulo;
-    document.getElementById('confirm-mensaje').innerText = mensaje;
-    
-    const btnAceptar = document.getElementById('btn-confirm-aceptar');
-    const btnCancelar = document.getElementById('btn-confirm-cancelar');
-
-    modal.classList.remove('hidden');
-
-    const ocultar = () => {
-      modal.classList.add('hidden');
-      btnAceptar.onclick = null;
-      btnCancelar.onclick = null;
-    };
-
-    btnAceptar.onclick = () => { ocultar(); callbackAceptar(); };
-    btnCancelar.onclick = ocultar;
-  }
-
   window.onload = () => {
     let savedTheme = localStorage.getItem('theme_preference') || 'dark';
     cambiarTemaVisual(savedTheme);
@@ -491,7 +446,7 @@
     if (nuevoRol === 'invitado') {
       cerrarSesionCompleta();
     } else if (nuevoRol === rolActual) {
-      if (rolActual === 'admin') document.getElementById('admin-panel').classList.remove('hidden');
+      if (rolActual === 'admin' || rolActual === 'moderador') document.getElementById('admin-panel').classList.remove('hidden');
     } else {
       targetRolPendiente = nuevoRol;
       document.getElementById('modal-titulo').innerText = nuevoRol === 'admin' ? 'PANEL ADMINISTRADOR' : 'ACCESO MODERADOR';
@@ -513,16 +468,15 @@
       localStorage.setItem('sesion_rol', 'moderador');
       cerrarLogin();
       aplicarPermisosRol('moderador');
-      mostrarNotificacion("Sesión de Moderador iniciada", "success");
+      document.getElementById('admin-panel').classList.remove('hidden');
     } else if (targetRolPendiente === 'admin' && inputPass === passAdmin) {
       rolActual = 'admin';
       localStorage.setItem('sesion_rol', 'admin');
       cerrarLogin();
       aplicarPermisosRol('admin');
       document.getElementById('admin-panel').classList.remove('hidden');
-      mostrarNotificacion("Sesión de Administrador iniciada", "success");
     } else {
-      mostrarNotificacion("Contraseña incorrecta", "error");
+      alert("Contraseña incorrecta.");
       cerrarLogin();
     }
   }
@@ -553,69 +507,12 @@
     renderizarCamiones();
   }
 
-  function renderizarCamiones() {
-    const contenedor = document.getElementById('contenedor-camiones');
-    contenedor.innerHTML = '';
-    
-    if(camiones.length === 0) {
-      contenedor.innerHTML = '<tr><td colspan="7" class="text-center text-[10px] text-gray-500 py-3">Sin unidades registradas.</td></tr>';
-      return;
-    }
-
-    const disabledAttr = rolActual === 'invitado' ? 'disabled' : '';
-
-    camiones.forEach((c, index) => {
-      let tr = document.createElement('tr');
-      
-      // CÁLCULO DE DEMORA INDIVIDUAL EN CARGA (> 45 MIN)
-      let esDemoraExcesiva = false;
-      let minCarga = 0;
-      if (c.llegada && c.salida) {
-        let [h1, m1] = c.llegada.split(':').map(Number);
-        let [h2, m2] = c.salida.split(':').map(Number);
-        minCarga = (h2 * 60 + m2) - (h1 * 60 + m1);
-        if (minCarga > 45) {
-          esDemoraExcesiva = true;
-        }
-      }
-
-      if (esDemoraExcesiva) {
-        tr.className = 'border-b border-red-500/50 bg-red-900/60 border-l-4 border-red-500 transition-colors duration-300';
-      } else {
-        tr.className = 'border-b border-slate-800/80 hover:bg-slate-800/30';
-      }
-
-      let perd = calcularTiempoPerdidoEntreCamiones(index);
-      
-      tr.innerHTML = `
-        <td class="p-0.5"><input type="text" maxlength="10" class="glass-input text-[10px] font-bold ${esDemoraExcesiva ? 'text-red-200' : ''}" value="${c.unidad}" placeholder="42-400" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
-        <td class="p-0.5"><input type="number" maxlength="4" class="glass-input text-[10px]" value="${c.tn}" placeholder="150" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||'')"></td>
-        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.llegada}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
-        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.salida}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'salida', this.value)"></td>
-        <td class="p-0.5">
-          <select class="glass-input text-[9px] font-bold bg-slate-800" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'estatus', this.value)">
-            <option value="espera" ${c.estatus === 'espera' ? 'selected' : ''}>⏳ Espera</option>
-            <option value="cargando" ${c.estatus === 'cargando' ? 'selected' : ''}>🚜 Cargando</option>
-            <option value="ruta" ${c.estatus === 'ruta' ? 'selected' : ''}>🚚 En Ruta</option>
-            <option value="falla" ${c.estatus === 'falla' ? 'selected' : ''}>⚠️ Falla</option>
-          </select>
-        </td>
-        <td class="p-0.5 ${perd > 30 ? 'text-red-500' : 'text-yellow-400'} font-bold text-center" id="perd-${c.id}">${perd}m</td>
-        <td class="p-0.5 text-center">
-          ${rolActual !== 'invitado' ? `<button onclick="eliminarCamion(${c.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '-'}
-        </td>
-      `;
-      contenedor.appendChild(tr);
-    });
-  }
-
   function cerrarSesionCompleta() {
     rolActual = 'invitado';
     localStorage.setItem('sesion_rol', 'invitado');
     document.getElementById('select-rol').value = 'invitado';
     cerrarAdminPanel();
     aplicarPermisosRol('invitado');
-    mostrarNotificacion("Sesión cerrada correctamente", "info");
   }
 
   function agregarFilaCamion(data = null) {
@@ -664,6 +561,60 @@
     
     let diff = (h2 * 60 + m2) - (h1 * 60 + m1);
     return diff > 0 ? diff : 0;
+  }
+
+  function renderizarCamiones() {
+    const contenedor = document.getElementById('contenedor-camiones');
+    contenedor.innerHTML = '';
+    
+    if(camiones.length === 0) {
+      contenedor.innerHTML = '<tr><td colspan="7" class="text-center text-[10px] text-gray-500 py-3">Sin unidades registradas.</td></tr>';
+      return;
+    }
+
+    const disabledAttr = rolActual === 'invitado' ? 'disabled' : '';
+
+    camiones.forEach((c, index) => {
+      let tr = document.createElement('tr');
+      
+      let esDemoraExcesiva = false;
+      if (c.llegada && c.salida) {
+        let [h1, m1] = c.llegada.split(':').map(Number);
+        let [h2, m2] = c.salida.split(':').map(Number);
+        let minCarga = (h2 * 60 + m2) - (h1 * 60 + m1);
+        if (minCarga > 45) {
+          esDemoraExcesiva = true;
+        }
+      }
+
+      if (esDemoraExcesiva) {
+        tr.className = 'border-b border-red-500/50 bg-red-900/60 border-l-4 border-red-500 transition-colors duration-300';
+      } else {
+        tr.className = 'border-b border-slate-800/80 hover:bg-slate-800/30';
+      }
+
+      let perd = calcularTiempoPerdidoEntreCamiones(index);
+      
+      tr.innerHTML = `
+        <td class="p-0.5"><input type="text" maxlength="10" class="glass-input text-[10px] font-bold ${esDemoraExcesiva ? 'text-red-200' : ''}" value="${c.unidad}" placeholder="42-400" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
+        <td class="p-0.5"><input type="number" maxlength="4" class="glass-input text-[10px]" value="${c.tn}" placeholder="150" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||'')"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.llegada}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
+        <td class="p-0.5"><input type="time" class="glass-input text-[10px] p-0" value="${c.salida}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'salida', this.value)"></td>
+        <td class="p-0.5">
+          <select class="glass-input text-[9px] font-bold bg-slate-800" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'estatus', this.value)">
+            <option value="espera" ${c.estatus === 'espera' ? 'selected' : ''}>⏳ Espera</option>
+            <option value="cargando" ${c.estatus === 'cargando' ? 'selected' : ''}>🚜 Cargando</option>
+            <option value="ruta" ${c.estatus === 'ruta' ? 'selected' : ''}>🚚 En Ruta</option>
+            <option value="falla" ${c.estatus === 'falla' ? 'selected' : ''}>⚠️ Falla</option>
+          </select>
+        </td>
+        <td class="p-0.5 ${perd > 30 ? 'text-red-500' : 'text-yellow-400'} font-bold text-center" id="perd-${c.id}">${perd}m</td>
+        <td class="p-0.5 text-center">
+          ${rolActual !== 'invitado' ? `<button onclick="eliminarCamion(${c.id})" class="text-red-400 hover:text-red-300"><i class="fas fa-trash-alt text-[10px]"></i></button>` : '-'}
+        </td>
+      `;
+      contenedor.appendChild(tr);
+    });
   }
 
   function calcularTotalesGenerales() {
@@ -737,7 +688,7 @@
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: '#0f172a', font: { size: 10 } } }
+          legend: { labels: { color: '#e2e8f0', font: { size: 10 } } }
         }
       }
     });
@@ -763,8 +714,8 @@
         responsive: true,
         maintainAspectRatio: false,
         scales: {
-          x: { ticks: { color: '#475569', font: { size: 9 } } },
-          y: { ticks: { color: '#475569', font: { size: 9 } } }
+          x: { ticks: { color: '#94a3b8', font: { size: 9 } } },
+          y: { ticks: { color: '#94a3b8', font: { size: 9 } } }
         },
         plugins: {
           legend: { display: false }
@@ -774,20 +725,48 @@
   }
 
   function compartirWhatsApp() {
-    let finca = document.getElementById('finca').value || 'Sin Nombre';
-    let fecha = document.getElementById('fecha').value || '';
-    let tons = document.getElementById('res-tons-enviadas').innerText;
-    let perd = document.getElementById('res-falta-transporte').innerText;
-    let req = document.getElementById('res-unidades-requeridas').innerText;
-    let obs = document.getElementById('obs').value || 'Sin observaciones';
+    let frente = document.getElementById('wa-frente').value || 'Frente 1';
+    let turno = document.getElementById('wa-turno').value || 'Turno A 06:00 a 18:00';
+    let enProceso = document.getElementById('wa-proceso').value || '0';
+    let enCola = document.getElementById('wa-cola').value || '0';
+    let enRuta = document.getElementById('wa-ruta-frente').value || 'Ninguno';
 
-    let texto = `📊 *RESUMEN DE LOGÍSTICA DE CAMPO*\n` +
-                `📅 *Fecha:* ${fecha}\n` +
-                `🏡 *Finca:* ${finca}\n` +
-                `📤 *Tons Enviadas:* ${tons}\n` +
-                `🕐 *Tiempo Perdido:* ${perd}\n` +
-                `🚛 *Unidades Requeridas:* ${req}\n` +
-                `📝 *Obs:* ${obs}`;
+    let finca = document.getElementById('finca').value || 'Finca Sin Nombre';
+    
+    let fechaRaw = document.getElementById('fecha').value;
+    let fechaFormat = 'DD-MM-YY';
+    if (fechaRaw) {
+      let partes = fechaRaw.split('-');
+      fechaFormat = `${partes[2]}-${partes[1]}-${partes[0].slice(-2)}`;
+    }
+
+    let ahora = new Date();
+    let horaActual = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    let despachadosCount = camiones.length;
+    let combinacionPredeterminada = "Penta"; 
+
+    let listaCamionesTexto = "";
+    if (camiones.length > 0) {
+      camiones.forEach((c, index) => {
+        let nomUnidad = c.unidad ? c.unidad : 'S/U';
+        listaCamionesTexto += `${index + 1}. ${nomUnidad} ${combinacionPredeterminada}\n`;
+      });
+    } else {
+      listaCamionesTexto = "Sin unidades despachadas.\n";
+    }
+
+    let texto = `*${frente}*\n\n` +
+                `📆 *Fecha:* *${fechaFormat}*\n` +
+                `🔄 *Turno: ${turno}*\n` +
+                `🕜 *Hora:* ${horaActual}\n` +
+                `🚛 *Combinacion:* ${combinacionPredeterminada}\n` +
+                `✅ *Despachados:* ${despachadosCount}\n\n` +
+                `\`${finca}\`\n\n` +
+                `${listaCamionesTexto}\n` +
+                `En proceso: ${enProceso}\n\n` +
+                `En cola: ${enCola}\n\n` +
+                `En ruta para el frente: ${enRuta}`;
 
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
   }
@@ -817,10 +796,15 @@
       saldo: document.getElementById('saldo').value,
       dispo: document.getElementById('dispo').value,
       obs: document.getElementById('obs').value,
-      camiones: camiones
+      camiones: camiones,
+      waFrente: document.getElementById('wa-frente').value,
+      waTurno: document.getElementById('wa-turno').value,
+      waProceso: document.getElementById('wa-proceso').value,
+      waCola: document.getElementById('wa-cola').value,
+      waRutaFrente: document.getElementById('wa-ruta-frente').value
     };
     localStorage.setItem('logistica_draft', JSON.stringify(data));
-    mostrarNotificacion("¡Borrador guardado localmente!", "success");
+    alert("¡Borrador guardado localmente!");
   }
 
   function cargarBorradorLocal() {
@@ -835,6 +819,11 @@
       document.getElementById('saldo').value = d.saldo || '';
       document.getElementById('dispo').value = d.dispo || '';
       document.getElementById('obs').value = d.obs || '';
+      if (d.waFrente) document.getElementById('wa-frente').value = d.waFrente;
+      if (d.waTurno) document.getElementById('wa-turno').value = d.waTurno;
+      if (d.waProceso) document.getElementById('wa-proceso').value = d.waProceso;
+      if (d.waCola) document.getElementById('wa-cola').value = d.waCola;
+      if (d.waRutaFrente) document.getElementById('wa-ruta-frente').value = d.waRutaFrente;
       camiones = d.camiones || [];
       renderizarCamiones();
       calcularTotalesGenerales();
@@ -843,17 +832,10 @@
 
   function confirmarGuardarTurno() {
     if (rolActual === 'invitado') return;
+    if(!confirm("¿Confirmas guardar el turno completo en la Base de Datos?")) return;
 
-    mostrarModalConfirmacion(
-      "GUARDAR TURNO", 
-      "¿Confirmas guardar el turno completo en la Base de Datos?",
-      ejecutarGuardadoDB
-    );
-  }
-
-  function ejecutarGuardadoDB() {
     if(!db) {
-      mostrarNotificacion("Firebase no está configurado con las claves API", "error");
+      alert("Atención: Firebase no está configurado aún con las claves API.");
       return;
     }
 
@@ -886,14 +868,14 @@
 
     db.ref('registros').push().set(payload)
       .then(() => {
-        mostrarNotificacion("Turno guardado con éxito en la Base de Datos", "success");
+        alert("Turno guardado con éxito en la Base de Datos.");
         localStorage.removeItem('logistica_draft');
         limpiarFormularioCompleto();
         btnGuardar.disabled = false;
         btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
       })
       .catch((err) => {
-        mostrarNotificacion("Error al guardar: " + err.message, "error");
+        alert("Error al guardar: " + err.message);
         btnGuardar.disabled = false;
         btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
       });
@@ -906,7 +888,7 @@
     let adm = document.getElementById('nueva-pass-admin').value;
     if (mod) { passModerador = mod; localStorage.setItem('passMod', mod); }
     if (adm) { passAdmin = adm; localStorage.setItem('passAdmin', adm); }
-    mostrarNotificacion("Contraseñas actualizadas correctamente", "success");
+    alert("Contraseñas actualizadas correctamente.");
   }
 
   function aplicarFondoArchivo() {
@@ -916,7 +898,7 @@
       reader.onload = function(e) {
         localStorage.setItem('customBg', e.target.result);
         aplicarFondoDesdeStorage();
-        mostrarNotificacion("Fondo personalizado cargado", "success");
+        alert("Fondo personalizado cargado.");
       };
       reader.readAsDataURL(fileInput.files[0]);
     }
@@ -925,7 +907,7 @@
   function quitarFondoCustom() {
     localStorage.removeItem('customBg');
     aplicarFondoDesdeStorage();
-    mostrarNotificacion("Fondo restaurado al original", "info");
+    alert("Fondo restaurado al original.");
   }
 
   function abrirBuscadorFincas() { document.getElementById('modal-buscador').classList.remove('hidden'); }
@@ -933,10 +915,7 @@
 
   function ejecutarBusquedaFinca() {
     let query = document.getElementById('input-busca-finca').value.trim().toLowerCase();
-    if(!query) {
-      mostrarNotificacion("Ingrese un parámetro a buscar", "error");
-      return;
-    }
+    if(!query) return alert("Ingrese un parámetro a buscar.");
 
     let cont = document.getElementById('resultado-busqueda');
     cont.innerHTML = '<p class="text-sky-400 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando registros...</p>';
