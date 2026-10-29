@@ -288,17 +288,17 @@
 
       <!-- PANEL UNIFICADO Y COMPACTO DE RITMOS -->
       <div class="glass p-1.5 rounded-lg border-l-4 border-sky-500 space-y-1">
-        <span class="text-[7px] text-sky-400 uppercase tracking-wide block font-extrabold border-b border-slate-700/60 pb-0.5">⚡ Indicadores de Ritmo y Cadencia Operativa</span>
+        <span class="text-[7px] text-sky-400 uppercase tracking-wide block font-extrabold border-b border-slate-700/60 pb-0.5">⚡ Ritmo y Cadencia Operativa</span>
         <div class="grid grid-cols-3 gap-1 text-center">
-          <div class="bg-slate-900/40 p-1 rounded border border-slate-800">
+          <div class="bg-slate-600/40 p-1 rounded border border-slate-700">
             <span class="text-[6px] text-gray-400 block font-semibold">Despacho</span>
             <span id="res-ritmo-despacho" class="text-[9px] font-extrabold text-sky-300 leading-tight block">0.00 T/h</span>
           </div>
-          <div class="bg-slate-900/40 p-1 rounded border border-slate-800">
+          <div class="bg-slate-600/40 p-1 rounded border border-slate-700">
             <span class="text-[6px] text-gray-400 block font-semibold">Cadencia Transp.</span>
             <span id="res-ritmo-transporte" class="text-[9px] font-extrabold text-teal-300 leading-tight block">Cada 0 min</span>
           </div>
-          <div class="bg-slate-900/40 p-1 rounded border border-slate-800">
+          <div class="bg-slate-600/40 p-1 rounded border border-slate-700">
             <span class="text-[6px] text-gray-400 block font-semibold">Llenado Jaula</span>
             <span id="res-ritmo-jaula" class="text-[9px] font-extrabold text-indigo-300 leading-tight block">0 min</span>
           </div>
@@ -940,7 +940,7 @@
         <td class="p-0.5"><input type="time" class="glass-input text-[8px] p-0 text-center" value="${c.llegada}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
         <td class="p-0.5"><input type="time" class="glass-input text-[8px] p-0 text-center" value="${c.salida}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'salida', this.value)"></td>
         <td class="p-0.5">
-          <select class="glass-input text-[8px] font-bold bg-slate-800 px-0.5" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'jaula', this.value)">
+          <select class="glass-input text-[7px] font-bold bg-slate-800 px-0.5" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'jaula', this.value)">
             <option value="Doble" ${c.jaula === 'Doble' ? 'selected' : ''}>Doble</option>
             <option value="Triple" ${c.jaula === 'Triple' ? 'selected' : ''}>Triple</option>
             <option value="tetra" ${c.jaula === 'tetra' ? 'selected' : ''}>tetra</option>
