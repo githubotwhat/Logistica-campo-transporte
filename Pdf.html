@@ -691,11 +691,11 @@
     if (!badgeConn) return;
     if (navigator.onLine) {
       badgeConn.className = 'px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30';
-      badgeConn.innerText = '🟢 Online';
+      badgeConn.innerText = '🟢';
       sincronizarTurnosPendientesOffline();
     } else {
       badgeConn.className = 'px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30';
-      badgeConn.innerText = '📡 Offline';
+      badgeConn.innerText = '📡';
     }
   }
 
