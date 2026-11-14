@@ -207,7 +207,7 @@
       </button>
       <div>
         <h1 class="font-extrabold text-xs tracking-widest text-cyan-400 neon-text leading-tight">LOCAT MÓVIL</h1>
-        <p class="text-[9px] text-sky-300/70 tracking-wider leading-tight">ZAFRA // AMPLIO HUD</p>
+        <p class="text-[9px] text-sky-300/70 tracking-wider leading-tight">ZAFRA // 26-27</p>
       </div>
     </div>
     <div class="flex items-center gap-2 text-xs">
@@ -1150,12 +1150,12 @@
         </td>
         <td class="p-1">
           <select class="glass-input text-[11px] font-mono font-bold bg-slate-900 px-1 truncate" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'estatus', this.value)">
-            <option value="En Ruta" ${c.estatus === 'En Ruta' ? 'selected' : ''}>🟢 Ruta</option>
-            <option value="Viene en ruta" ${c.estatus === 'Viene en ruta' ? 'selected' : ''}>🚚 En ruta</option>
+            <option value="En Ruta" ${c.estatus === 'En Ruta' ? 'selected' : ''}>🟢 Va en Ruta</option>
+            <option value="Viene en ruta" ${c.estatus === 'Viene en ruta' ? 'selected' : ''}>⚪ Viene en ruta</option>
             <option value="En Cola" ${c.estatus === 'En Cola' ? 'selected' : ''}>🟡 Cola</option>
-            <option value="Cargando" ${c.estatus === 'Cargando' ? 'selected' : ''}>🔵 Carga</option>
-            <option value="Báscula" ${c.estatus === 'Báscula' ? 'selected' : ''}>🟣 Básc.</option>
-            <option value="Demorado" ${c.estatus === 'Demorado' ? 'selected' : ''}>🔴 Dem.</option>
+            <option value="Cargando" ${c.estatus === 'Cargando' ? 'selected' : ''}>🔵 Cargando</option>
+            <option value="Báscula" ${c.estatus === 'Báscula' ? 'selected' : ''}>🟣 Despues de Básc.</option>
+            <option value="Demorado" ${c.estatus === 'Demorado' ? 'selected' : ''}>🔴 Demorado.</option>
           </select>
         </td>
         <td class="p-1 ${perd > 30 ? 'text-red-400' : (isLight ? 'text-amber-700' : 'text-amber-300')} font-mono font-extrabold text-center text-xs" title="${c.razonPerdida || 'Sin demora'}">${perd}m</td>
