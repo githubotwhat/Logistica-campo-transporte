@@ -1,0 +1,2039 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>LOCAT Móvil - HUD Industrial</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#030712">
+  <!-- Chart.js para gráficos interactivos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- html2pdf.js para exportación a PDF nativa en cliente -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    /* TIPOGRAFÍA ESTÁNDAR Y TAMAÑO 12PX ÓPTIMO */
+    html, body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 13px;
+      overscroll-behavior-y: none;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* CONTENEDOR PRINCIPAL CON SCROLL INTERNO Y MAYOR ESPACIO VERTICAL */
+    #scroll-container {
+      position: absolute;
+      top: 46px;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 8px;
+    }
+
+    .main-container-width {
+      max-width: 42rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* INTRO / PANTALLA DE CARGA 0 A 100% */
+    #loader-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: radial-gradient(circle at 50% 50%, #0f172a 0%, #030712 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.2s ease-out;
+    }
+    .loader-progress-track {
+      width: 260px;
+      height: 6px;
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+      margin-top: 14px;
+      border: 1px solid rgba(6, 182, 212, 0.4);
+    }
+    .loader-progress-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #06b6d4, #38bdf8, #818cf8);
+      border-radius: 9999px;
+      transition: width 0.08s linear;
+    }
+
+    /* MODO OSCURO PROFESIONAL / CYBER-INDUSTRIAL HUD */
+    body.theme-dark {
+      background-color: #030712;
+      color: #f1f5f9;
+      background-image: 
+        radial-gradient(circle at 50% -20%, rgba(6, 182, 212, 0.15) 0%, transparent 55%),
+        linear-gradient(rgba(3,7,18,0.94), rgba(3,7,18,0.97)), 
+        url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    body.theme-dark .glass {
+      background: rgba(11, 19, 38, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      box-shadow: 0 10px 28px 0 rgba(0, 0, 0, 0.65);
+    }
+    body.theme-dark .glass-input {
+      background: rgba(3, 7, 18, 0.92);
+      border: 1px solid rgba(6, 182, 212, 0.32);
+      color: #38bdf8;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 5px 6px;
+      width: 100%;
+      font-size: 12px;
+      transition: all 0.2s ease;
+    }
+    body.theme-dark .glass-input:focus {
+      outline: none;
+      border-color: #06b6d4;
+      box-shadow: 0 0 10px rgba(6, 182, 212, 0.45);
+      color: #f8fafc;
+    }
+    body.theme-dark .panel-subbox {
+      background-color: rgba(15, 23, 42, 0.82);
+      border: 1px solid rgba(6, 182, 212, 0.18);
+    }
+    body.theme-dark .btn-agregar-custom {
+      background: linear-gradient(135deg, #0891b2, #0284c7);
+      color: #ffffff;
+      border: 1px solid rgba(56, 189, 248, 0.5);
+    }
+
+    /* MODO CLARO (PROFESIONAL Y ALTAMENTE LEGIBLE) */
+    body.theme-light {
+      background-color: #f8fafc;
+      color: #0f172a;
+      background-image: linear-gradient(rgba(248,250,252,0.92), rgba(248,250,252,0.92)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    body.theme-light .glass {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.08);
+    }
+    body.theme-light .glass-input {
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      color: #0f172a;
+      font-weight: 600;
+      border-radius: 6px;
+      padding: 5px 6px;
+      width: 100%;
+      font-size: 12px;
+    }
+    body.theme-light .glass-input:focus {
+      outline: none;
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+    }
+    
+    body.theme-light .text-sky-400, body.theme-light .text-sky-300 { color: #0369a1 !important; }
+    body.theme-light .text-gray-400 { color: #334155 !important; font-weight: 600 !important; }
+    body.theme-light .text-green-300, body.theme-light .text-green-400 { color: #166534 !important; font-weight: 700; }
+    body.theme-light .text-yellow-300, body.theme-light .text-yellow-400 { color: #9a3412 !important; font-weight: 700; }
+    body.theme-light .text-purple-300, body.theme-light .text-purple-400 { color: #581c87 !important; font-weight: 700; }
+    body.theme-light .text-pink-300, body.theme-light .text-pink-400 { color: #9d174d !important; font-weight: 700; }
+    body.theme-light .bg-slate-800 { background-color: #e2e8f0 !important; color: #0f172a !important; border: 1px solid #cbd5e1 !important; }
+    body.theme-light .bg-slate-900\/50, body.theme-light .bg-slate-900\/60, body.theme-light .bg-slate-900\/75, body.theme-light .bg-slate-900\/80 { background-color: #f1f5f9 !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
+    body.theme-light .panel-subbox { background-color: #f1f5f9; border: 1px solid #cbd5e1; }
+    body.theme-light table th { color: #1e293b !important; font-weight: 700; }
+    body.theme-light select.glass-input option { background-color: #ffffff; color: #0f172a; }
+    body.theme-light .btn-agregar-custom { background-color: #0284c7 !important; color: #ffffff !important; border: 1px solid #0369a1 !important; }
+
+    .neon-text { text-shadow: 0 0 10px rgba(6, 182, 212, 0.7); }
+    body.theme-light .neon-text { text-shadow: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* BARRA INFERIOR OCULTA CON REVELADO POR GESTO / TOQUE */
+    #bottom-nav-drawer {
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #bottom-nav-drawer.nav-visible {
+      transform: translateY(0);
+    }
+
+    #custom-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: rgba(3, 7, 18, 0.88);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #custom-modal-overlay.hidden { display: none !important; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body class="theme-dark" id="app-body">
+
+  <!-- INTRO / PANTALLA DE CARGA -->
+  <div id="loader-screen">
+    <div class="text-cyan-400 text-3xl font-extrabold neon-text tracking-widest mb-1">LOCAT MOVIL // 12px PRO</div>
+    <div class="text-[11px] text-sky-300/70 tracking-wider">Cargando interfaz ampliada de alta legibilidad...</div>
+    <div class="loader-progress-track">
+      <div id="loader-bar-fill" class="loader-progress-bar"></div>
+    </div>
+    <div id="loader-percentage" class="text-cyan-300 text-xs font-mono font-bold mt-2">0%</div>
+  </div>
+
+  <!-- BARRA SUPERIOR FIJA -->
+  <header class="fixed top-0 left-0 right-0 z-40 glass px-3 py-1.5 flex justify-between items-center shadow-lg border-b border-cyan-500/30 h-11">
+    <div class="flex items-center gap-2">
+      <button onclick="recargarPaginaSegura()" class="text-cyan-400 hover:text-cyan-300 p-1" title="Refrescar">
+        <i class="fas fa-sync-alt text-xs"></i>
+      </button>
+      <div>
+        <h2 class="font-extrabold text-xs tracking-widest text-cyan-400 neon-text leading-tight">LOCAT MÓVIL</h2>
+        <p class="text-[9px] text-sky-300/70 tracking-wider leading-tight">ZAFRA // 26-27</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <span id="badge-conexion" class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">🟢</span>
+      <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/25 text-cyan-200 font-bold border border-cyan-400/40" id="badge-rol-actual">Invitado</span>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR CON SCROLL INTERNO -->
+  <div id="scroll-container" class="no-scrollbar">
+    <div class="main-container-width space-y-2.5 pb-4">
+
+      <!-- DATOS DE OPERACIÓN -->
+      <div class="glass p-3 rounded-xl space-y-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-widest text-cyan-300 border-b border-cyan-500/30 pb-1 flex items-center gap-1.5">
+          <i class="fas fa-microchip text-[10px]"></i> Datos de Operación
+        </h2>
+        
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">FECHA</label>
+            <input type="date" id="fecha" class="glass-input campo-editable" onchange="guardarBorradorLocal()">
+          </div>
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">INICIO TURNO</label>
+            <input type="time" id="hora-inicio-turno" class="glass-input campo-editable" onchange="renderizarCamiones(); calcularTotalesGenerales(); guardarBorradorLocal();">
+          </div>
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">INGRESO</label>
+            <input type="number" id="ingreso-general" class="glass-input campo-editable" placeholder="0" oninput="calcularTotalesGenerales(); guardarBorradorLocal();">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">FINCA</label>
+            <input type="text" id="finca" class="glass-input campo-editable" placeholder="Nombre finca" oninput="guardarBorradorLocal()">
+          </div>
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">CÓDIGO FINCA</label>
+            <input type="text" id="codigo-finca" class="glass-input campo-editable" placeholder="Ej: 264-01" oninput="guardarBorradorLocal()">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-4 gap-2">
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">RUTA</label>
+            <input type="number" id="ruta" class="glass-input campo-editable" placeholder="0" oninput="calcularTotalesGenerales(); guardarBorradorLocal();">
+          </div>
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">SALDO</label>
+            <input type="number" id="saldo" class="glass-input campo-editable" placeholder="0" oninput="calcularTotalesGenerales(); guardarBorradorLocal();">
+          </div>
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">DISPO</label>
+            <input type="number" id="dispo" class="glass-input bg-slate-900/90 text-cyan-300 font-extrabold" placeholder="0" readonly>
+          </div>
+          <div>
+            <label class="text-[10px] text-sky-300/90 font-bold">TEÓRICO</label>
+            <input type="number" id="dispo-teorica" class="glass-input campo-editable" placeholder="0" oninput="calcularTotalesGenerales(); guardarBorradorLocal();">
+          </div>
+        </div>
+      </div>
+
+      <!-- TARJETAS DE INDICADORES PRINCIPALES -->
+      <div class="grid grid-cols-2 gap-2">
+        <div class="glass p-2 rounded-lg border-l-4 border-emerald-400 flex justify-between items-center">
+          <div>
+            <span class="text-[10px] text-emerald-300 block font-bold leading-tight">Tons Enviadas 📤</span>
+            <span id="res-tons-enviadas" class="text-sm font-mono font-extrabold text-emerald-300 mt-0.5 block">0.00</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[8px] text-cyan-300 block font-extrabold leading-tight">AVANCE:</span>
+            <span id="res-avance-teorico" class="text-xs font-mono font-black text-cyan-200">--%</span>
+          </div>
+        </div>
+        <div class="glass p-2 rounded-lg border-l-4 border-amber-400 flex justify-between items-center">
+          <div>
+            <span class="text-[10px] text-amber-300 block font-bold leading-tight">Tiempo Perdido 🕐</span>
+            <span id="res-falta-transporte" class="text-sm font-mono font-extrabold text-amber-300 mt-0.5 block">0 min</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[8px] text-red-300 block font-extrabold leading-tight">TNS PERD:</span>
+            <span id="res-tns-perdidas" class="text-xs font-mono font-black text-red-300">0.00 T</span>
+          </div>
+        </div>
+        <div class="glass p-2 rounded-lg border-l-4 border-purple-400 flex justify-between items-center">
+          <div>
+            <span class="text-[10px] text-purple-300 block font-bold leading-tight">Saldo Hora ⏰</span>
+            <span id="res-saldo-hora" class="text-sm font-mono font-extrabold text-purple-300 mt-0.5 block">0.00</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[8px] text-emerald-300 block font-extrabold leading-tight">EFECTIVO:</span>
+            <span id="res-eficiencia-operativa" class="text-xs font-mono font-black text-emerald-200">--%</span>
+          </div>
+        </div>
+        <div class="glass p-2 rounded-lg border-l-4 border-pink-400 flex justify-between items-center">
+          <div>
+            <span class="text-[10px] text-pink-300 block font-bold leading-tight">Req. / ETA 🚛</span>
+            <span id="res-unidades-requeridas" class="text-sm font-mono font-extrabold text-pink-300 mt-0.5 block">0.00</span>
+          </div>
+          <div class="text-right">
+            <span class="text-[8px] text-cyan-400 block font-extrabold leading-tight">EST:</span>
+            <span id="res-eta-proximo" class="text-xs font-mono font-black text-cyan-200">--:--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL UNIFICADO DE RITMOS, CARGA Y FRECUENCIA DE DESPACHO -->
+      <div class="glass px-2.5 py-2 rounded-lg border-l-4 border-cyan-400 space-y-1.5">
+        <div class="grid grid-cols-4 gap-1.5 text-center">
+          <div class="bg-slate-900/60 p-1 rounded border border-cyan-500/20">
+            <span class="text-[9px] text-cyan-300 block font-bold">Despacho:</span>
+            <span id="res-ritmo-despacho" class="text-[10px] font-mono font-extrabold text-cyan-200">0.00 T/h</span>
+          </div>
+          <div class="bg-slate-900/60 p-1 rounded border border-cyan-500/20">
+            <span class="text-[9px] text-teal-300 block font-bold">Transp:</span>
+            <span id="res-ritmo-transporte" class="text-[10px] font-mono font-extrabold text-teal-200">Cada 0 m</span>
+          </div>
+          <div class="bg-slate-900/60 p-1 rounded border border-cyan-500/20">
+            <span class="text-[9px] text-amber-300 block font-bold">Carga Prom:</span>
+            <span id="res-promedio-carga" class="text-[10px] font-mono font-extrabold text-amber-200">0 m</span>
+          </div>
+          <div class="bg-slate-900/60 p-1 rounded border border-cyan-500/20">
+            <span class="text-[9px] text-indigo-300 block font-bold">Jaula:</span>
+            <span id="res-ritmo-jaula" class="text-[10px] font-mono font-extrabold text-indigo-200">0 m</span>
+          </div>
+        </div>
+        <div class="bg-slate-900/75 px-2 py-1 rounded border border-cyan-500/25 flex items-center justify-between text-[10px] font-mono">
+          <span class="text-cyan-300 font-bold">⏱️ Cada cuánto despacho:</span>
+          <span id="res-frecuencia-despacho" class="text-emerald-300 font-extrabold">Sin datos (Mín: -- | Máx: --)</span>
+        </div>
+      </div>
+
+      <!-- CONTROL DE UNIDADES -->
+      <div class="glass p-2.5 rounded-xl space-y-1.5">
+        <div class="flex justify-between items-center border-b border-cyan-500/30 pb-1">
+          <div class="flex items-center gap-2">
+            <h2 class="text-xs font-extrabold uppercase tracking-widest text-cyan-300 flex items-center gap-1.5">
+              <i class="fas fa-truck-moving text-[10px]"></i> Control de Unidades
+            </h2>
+            <span id="badge-total-dsp" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono font-extrabold text-[10px] border border-cyan-400/40">0 dsp</span>
+          </div>
+          <button id="btn-add-camion" onclick="agregarFilaCamion()" class="btn-agregar-custom px-2.5 py-1 rounded text-xs font-bold flex items-center shadow">
+            <i class="fas fa-plus mr-1 text-[10px]"></i> Agregar
+          </button>
+        </div>
+
+        <div class="overflow-x-auto no-scrollbar">
+          <table class="w-full text-left border-collapse text-xs" style="table-layout: fixed;">
+            <thead>
+              <tr class="text-cyan-300/90 border-b border-cyan-500/30 text-[11px]">
+                <th class="py-1 px-0.5 w-[25%] font-bold">Unidad</th>
+                <th class="py-1 px-0.5 w-[8%] text-center font-bold">TNS</th>
+                <th class="py-1 px-0.5 w-[14%] text-center font-bold">Llega</th>
+                <th class="py-1 px-0.5 w-[14%] text-center font-bold">Sale</th>
+                <th class="py-1 px-0.5 w-[19%] font-bold">Tipo</th>
+                <th class="py-1 px-0.5 w-[14%] font-bold">Est</th>
+                <th class="py-1 px-0.5 w-[6%] text-center font-bold">TP</th>
+              </tr>
+            </thead>
+            <tbody id="contenedor-camiones"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- OBSERVACIONES Y REPORTES -->
+      <div class="glass p-3 rounded-xl space-y-2">
+        <label class="text-[10px] text-cyan-300 block font-extrabold uppercase tracking-widest">OBSERVACIONES DE TURNO</label>
+        <textarea id="obs" class="glass-input h-14 resize-none campo-editable text-xs" placeholder="Notas operativas del turno..." oninput="guardarBorradorLocal()"></textarea>
+        
+        <div class="grid grid-cols-2 gap-2 pt-0.5">
+          <button onclick="compartirWhatsApp()" class="w-full bg-gradient-to-r from-emerald-700 to-emerald-600 text-white py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow border border-emerald-400/30">
+            <i class="fab fa-whatsapp text-sm"></i> WhatsApp
+          </button>
+          <button onclick="generarReportePDF()" class="w-full bg-gradient-to-r from-blue-700 to-cyan-600 text-white py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-1.5 shadow border border-cyan-400/30">
+            <i class="fas fa-file-pdf text-sm"></i> Descargar PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- BOTONES PRINCIPALES -->
+      <div class="grid grid-cols-2 gap-2 pb-1">
+        <button id="btn-borrador" onclick="sincronizarBorrador()" class="bg-slate-900/80 hover:bg-slate-800 text-cyan-300 py-2 rounded-xl font-bold text-xs border border-cyan-500/30 flex items-center justify-center gap-1.5 shadow">
+          <i class="fas fa-save text-[10px]"></i> Borrador
+        </button>
+        <button id="btn-guardar" onclick="confirmarGuardarTurno()" class="bg-gradient-to-r from-cyan-600 to-blue-600 text-white py-2 rounded-xl font-bold text-xs shadow border border-cyan-400/40 flex items-center justify-center gap-1.5">
+          <i class="fas fa-paper-plane text-[10px]"></i> Guardar Turno
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PESTAÑA / MANIJA DISCRETA PARA REVELAR BARRA INFERIOR -->
+  <button id="nav-reveal-handle" onclick="toggleBottomNav(true)" title="Desliza o toca para abrir barra" class="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-30 bg-slate-900/90 text-cyan-300 border border-b-0 border-cyan-500/40 rounded-t-lg px-4 py-0.5 text-[9px] font-mono font-bold shadow flex items-center gap-1">
+    <i class="fas fa-chevron-up text-[8px]"></i> BARRA
+  </button>
+
+  <!-- BARRA INFERIOR OCULTABLE (REVELABLE AL JALAR DESDE ABAJO/IZQUIERDA O TOCAR PESTAÑA) -->
+  <nav id="bottom-nav-drawer" class="fixed bottom-0 left-0 right-0 z-40 glass px-4 py-1.5 flex justify-around items-center shadow-lg border-t border-cyan-500/30 h-[48px]">
+    <button onclick="abrirMenuFlotante(); toggleBottomNav(false);" class="flex flex-col items-center text-cyan-400 hover:text-cyan-300" title="Menú">
+      <i class="fas fa-bars text-sm"></i>
+      <span class="text-[9px] font-extrabold mt-0.5">Menú</span>
+    </button>
+    <button onclick="abrirModalGraficos(); toggleBottomNav(false);" class="flex flex-col items-center text-cyan-400 hover:text-cyan-300" title="Gráficas">
+      <i class="fas fa-chart-pie text-sm"></i>
+      <span class="text-[9px] font-extrabold mt-0.5">Gráficas</span>
+    </button>
+    <button id="btn-toggle-tema-quick" onclick="alternarTemaRapido()" class="flex flex-col items-center text-cyan-400 hover:text-cyan-300 hidden" title="Tema">
+      <i class="fas fa-moon text-sm" id="icon-tema-quick"></i>
+      <span class="text-[9px] font-extrabold mt-0.5">Tema</span>
+    </button>
+    <button onclick="toggleBottomNav(false)" class="flex flex-col items-center text-sky-300 hover:text-cyan-200" title="Ocultar barra">
+      <i class="fas fa-chevron-down text-sm"></i>
+      <span class="text-[9px] font-extrabold mt-0.5">Ocultar</span>
+    </button>
+    <button id="btn-logout" onclick="cerrarSesionCompleta(); toggleBottomNav(false);" class="flex flex-col items-center text-red-400 hover:text-red-300 hidden" title="Salir">
+      <i class="fas fa-sign-out-alt text-sm"></i>
+      <span class="text-[9px] font-extrabold mt-0.5">Salir</span>
+    </button>
+  </nav>
+
+  <!-- MODAL OPCIONES DE FILA (VIAJE) -->
+  <div id="modal-opciones-fila" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="glass p-4 rounded-2xl w-full max-w-sm text-center space-y-3 border border-cyan-500/40 shadow-2xl">
+      <h3 class="text-xs font-extrabold tracking-widest text-cyan-300 uppercase">Gestión de Demora y Conteo</h3>
+      <p id="modal-fila-info" class="text-xs text-cyan-200/90 font-mono font-bold"></p>
+      
+      <div class="space-y-2.5 text-left pt-1">
+        <div>
+          <label class="text-[10px] text-cyan-300 font-bold uppercase">Razón de Tiempo Perdido:</label>
+          <select id="select-razon-perdida" class="glass-input bg-slate-900 text-xs py-1.5 font-bold">
+            <option value="Sin demora registrada">Sin demora registrada</option>
+            <option value="Falta transporte">Falta transporte</option>
+            <option value="Ruta bloqueada">Ruta bloqueada</option>
+            <option value="Patio lleno">Patio lleno</option>
+            <option value="Parada operacional">Parada operacional</option>
+            <option value="Indisponibilidad de maquina alce">Indisponibilidad de máquina alce</option>
+            <option value="Mal terreno">Mal terreno</option>
+            <option value="Lluvia">Lluvia</option>
+            <option value="Traslado">Traslado</option>
+            <option value="Menos 1 alzadora">Menos 1 alzadora</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-cyan-300 font-bold uppercase">Minutos Perdidos:</label>
+          <input type="number" id="input-minutos-demora-modal" class="glass-input text-xs py-1.5 font-mono font-bold" placeholder="0">
+          <p class="text-[9px] text-sky-300/70 mt-1">※ Cálculo automático desde inicio de turno o unidad anterior.</p>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="guardarDatosFilaModal()" class="w-1/2 bg-cyan-600 hover:bg-cyan-500 py-2 rounded-lg text-xs font-bold text-white shadow">Guardar</button>
+        <button onclick="ejecutarEliminarViajeModal()" class="w-1/2 bg-red-600 hover:bg-red-700 py-2 rounded-lg text-xs font-bold text-white shadow">Eliminar</button>
+      </div>
+      <button onclick="cerrarModalFila()" class="w-full bg-slate-800 hover:bg-slate-700 py-1.5 rounded-lg text-xs text-cyan-300 font-bold border border-cyan-500/20">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- MODAL AUTENTICACIÓN FIREBASE -->
+  <div id="login-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="glass p-6 rounded-2xl w-full max-w-sm text-center space-y-4 border border-cyan-500/40 shadow-2xl">
+      <div class="text-cyan-400 text-3xl mb-1"><i class="fas fa-user-shield"></i></div>
+      <h2 id="modal-titulo" class="text-sm font-extrabold tracking-widest text-cyan-300">AUTENTICACIÓN HUD</h2>
+      <p id="modal-desc" class="text-xs text-sky-300/80">Ingrese sus credenciales de seguridad.</p>
+      
+      <div class="space-y-2 text-left">
+        <div>
+          <label class="text-[10px] text-cyan-300 font-bold ml-1">CORREO</label>
+          <input type="email" id="email-input" class="glass-input text-center text-xs py-2 font-mono" placeholder="Correo electrónico">
+        </div>
+        <div>
+          <label class="text-[10px] text-cyan-300 font-bold ml-1">CONTRASEÑA</label>
+          <div class="relative flex items-center">
+            <input type="password" id="pass-input" class="glass-input text-center text-xs py-2 pr-8 font-mono" placeholder="Contraseña">
+            <button type="button" onclick="toggleMostrarPassword()" class="absolute right-2 text-cyan-400 focus:outline-none" title="Ver/Ocultar">
+              <i class="fas fa-eye text-xs" id="icon-eye-pass"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="cerrarLogin()" class="w-1/2 bg-slate-800 py-2 rounded-lg text-xs font-semibold text-cyan-300 border border-cyan-500/20">Cancelar</button>
+        <button type="button" onclick="procesarAutenticacionFirebase()" class="w-1/2 bg-gradient-to-r from-cyan-600 to-blue-600 py-2 rounded-lg text-xs font-bold text-white shadow">Ingresar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL DE ADMINISTRACIÓN / MENÚ GENERAL -->
+  <div id="admin-panel" class="fixed inset-x-3 top-12 z-50 glass p-3.5 rounded-2xl hidden border-cyan-500/40 max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl">
+    <div class="flex justify-between items-center mb-2 border-b border-cyan-500/30 pb-1.5">
+      <h3 id="panel-titulo-header" class="font-bold text-cyan-300 text-xs tracking-wider flex items-center gap-1.5"><i class="fas fa-bars mr-1"></i>Menú del Sistema</h3>
+      <button onclick="cerrarAdminPanel()" class="text-cyan-400 hover:text-red-400"><i class="fas fa-times text-base"></i></button>
+    </div>
+    
+    <div class="space-y-3 text-xs">
+      <div class="panel-subbox p-2.5 rounded-xl space-y-1">
+        <label class="block text-cyan-300 font-bold mb-1">Rol del Sistema</label>
+        <select id="select-rol" onchange="seleccionarRol(this.value)" class="glass-input bg-slate-900 font-bold py-1.5 text-cyan-300">
+          <option value="invitado">👁️ Invitado</option>
+          <option value="moderador">✏️ Moderador</option>
+          <option value="admin">⚙️ Admin</option>
+        </select>
+      </div>
+
+      <div class="panel-subbox p-2.5 rounded-xl">
+        <label class="block text-cyan-300 font-bold mb-1">Tema de la Interfaz</label>
+        <select id="select-tema-admin" onchange="cambiarTemaVisual(this.value)" class="glass-input bg-slate-900 font-bold py-1.5 text-cyan-300">
+          <option value="dark">🌙 Modo Oscuro HUD</option>
+          <option value="light">☀️ Modo Claro</option>
+        </select>
+      </div>
+
+      <div id="seccion-whatsapp" class="panel-subbox p-2.5 rounded-xl space-y-1.5 hidden">
+        <label class="block text-cyan-300 font-bold mb-1">Configuración Reporte WhatsApp</label>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-[9px] text-sky-300 font-bold">FRENTE</label>
+            <input type="text" id="wa-frente" class="glass-input campo-editable py-1" value="Frente 1" oninput="guardarBorradorLocal()">
+          </div>
+          <div>
+            <label class="text-[9px] text-sky-300 font-bold">TURNO</label>
+            <select id="wa-turno" class="glass-input bg-slate-900 text-xs font-bold text-cyan-300 py-1" onchange="guardarBorradorLocal()">
+              <option value="A 06:00 a 18:00">A 06:00 a 18:00</option>
+              <option value="A 18:00 a 06:00">A 18:00 a 06:00</option>
+              <option value="B 06:00 a 18:00">B 06:00 a 18:00</option>
+              <option value="B 18:00 a 06:00">B 18:00 a 06:00</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 pt-1">
+          <div>
+            <label class="text-[9px] text-sky-300 font-bold">PROCESO</label>
+            <input type="number" id="wa-proceso" class="glass-input campo-editable py-1" placeholder="0" value="0" oninput="guardarBorradorLocal()">
+          </div>
+          <div>
+            <label class="text-[9px] text-sky-300 font-bold">COLA</label>
+            <input type="number" id="wa-cola" class="glass-input campo-editable py-1" placeholder="0" value="0" oninput="guardarBorradorLocal()">
+          </div>
+          <div>
+            <label class="text-[9px] text-sky-300 font-bold">RUTA FRENTE</label>
+            <input type="text" id="wa-ruta-frente" class="glass-input campo-editable py-1" placeholder="Ej: 42" oninput="guardarBorradorLocal()">
+          </div>
+        </div>
+      </div>
+
+      <div id="seccion-solo-admin" class="space-y-2 hidden">
+        <div class="panel-subbox p-2.5 rounded-xl">
+          <label class="block text-cyan-300 font-bold mb-1">Fondo de Pantalla Local</label>
+          <input type="file" id="bg-file-input" accept="image/*" class="glass-input mb-2 text-xs">
+          <div class="flex gap-2">
+            <button onclick="aplicarFondoArchivo()" class="w-1/2 bg-blue-600 py-1.5 rounded-lg text-white font-bold shadow">Subir</button>
+            <button onclick="quitarFondoCustom()" class="w-1/2 bg-red-600 py-1.5 rounded-lg text-white font-bold shadow">Restaurar</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="border-t border-cyan-500/30 pt-2">
+        <button onclick="abrirBuscadorFincas()" class="w-full bg-slate-900 hover:bg-slate-800 py-2 rounded-lg font-semibold text-cyan-300 border border-cyan-500/30 shadow">
+          <i class="fas fa-search mr-1.5"></i> Consultar Registros
+        </button>
+      </div>
+
+      <button onclick="cerrarSesionCompleta()" class="w-full bg-gradient-to-r from-red-700 to-red-600 py-2 rounded-lg text-white font-bold shadow border border-red-400/30">Cerrar Sesión Activa</button>
+    </div>
+  </div>
+
+  <!-- MODAL BUSCADOR -->
+  <div id="modal-buscador" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
+    <div class="glass p-4 rounded-2xl w-full max-w-lg max-h-[90vh] flex flex-col border border-cyan-500/40 shadow-2xl">
+      <div class="flex justify-between items-center mb-3 border-b border-cyan-500/30 pb-2">
+        <h3 class="font-extrabold text-cyan-300 text-xs tracking-wider">Historial de Registros</h3>
+        <button onclick="cerrarBuscadorFincas()" class="text-cyan-400 hover:text-red-400"><i class="fas fa-times text-base"></i></button>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <input type="text" id="input-busca-finca" class="glass-input text-xs" placeholder="Buscar Finca, Código o Fecha...">
+        <button onclick="ejecutarBusquedaFinca()" class="bg-cyan-600 px-4 py-1.5 rounded-lg text-white font-bold text-xs shadow">Buscar</button>
+      </div>
+      <div id="resultado-busqueda" class="overflow-y-auto space-y-2 flex-1 no-scrollbar text-xs">
+        <p class="text-sky-300/70 text-center py-6 font-mono">Ingrese un término para buscar...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE GRÁFICOS, JAULAS Y PARETO -->
+  <div id="modal-graficos" class="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/90 backdrop-blur-md hidden">
+    <div class="glass p-4 rounded-2xl w-full max-w-lg max-h-[92vh] flex flex-col overflow-y-auto no-scrollbar space-y-3 border border-cyan-500/40 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-cyan-500/30 pb-2">
+        <h3 class="font-extrabold text-cyan-300 text-xs tracking-wider flex items-center gap-2">
+          <i class="fas fa-chart-pie text-cyan-400"></i> Dashboard, Equipos y Pareto (%)
+        </h3>
+        <button onclick="cerrarModalGraficos()" class="text-cyan-400 hover:text-red-400"><i class="fas fa-times text-base"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="panel-subbox p-2.5 rounded-xl">
+          <h4 class="text-[10px] font-bold text-cyan-300 mb-1 text-center">Distribución TNS</h4>
+          <div class="relative h-32 w-full flex items-center justify-center">
+            <canvas id="chartFincas"></canvas>
+          </div>
+        </div>
+        <div class="panel-subbox p-2.5 rounded-xl">
+          <h4 class="text-[10px] font-bold text-emerald-400 mb-1 text-center">Tons / Camión</h4>
+          <div class="relative h-32 w-full flex items-center justify-center">
+            <canvas id="chartCamiones"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESGLOSE POR TIPO DE JAULA -->
+      <div class="panel-subbox p-2.5 rounded-xl space-y-1.5">
+        <h4 class="text-[10px] font-bold text-indigo-300 text-center"><i class="fas fa-layer-group mr-1"></i> Resumen por Tipo de Equipo (Viajes y TNS)</h4>
+        <div id="dashboard-resumen-jaulas" class="text-[10px] text-sky-200 bg-slate-950/85 p-2 rounded-lg border border-indigo-500/30 font-mono">
+          Sin viajes registrados.
+        </div>
+      </div>
+
+      <!-- GRÁFICO DE PARETO -->
+      <div class="panel-subbox p-3 rounded-xl space-y-1.5">
+        <h4 class="text-[10px] font-bold text-amber-400 text-center"><i class="fas fa-exclamation-triangle mr-1"></i> Análisis Causa Raíz (% de Tiempo Perdido)</h4>
+        <div class="relative h-36 w-full flex items-center justify-center">
+          <canvas id="chartParetoDemoras"></canvas>
+        </div>
+        <div id="dashboard-resumen-demoras" class="text-[10px] text-sky-200 bg-slate-950/85 p-2 rounded-lg border border-cyan-500/30 space-y-1 font-mono">
+          <span class="font-bold text-cyan-300">Desglose Estadístico:</span>
+          <div id="dashboard-lista-demoras">Sin demoras registradas.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR OCULTO PARA PDF -->
+  <div id="print-report-container" style="display: none; padding: 20px; background: #ffffff; color: #0f172a; font-family: system-ui, sans-serif;">
+    <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 15px;">
+      <h2 style="color: #0284c7; margin: 0; font-size: 18px;">LOCAT MÓVIL - REPORTE DE TURNO</h2>
+      <p id="pdf-print-fecha-frente" style="font-size: 11px; color: #475569; margin: 4px 0 0 0;"></p>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 11px; margin-bottom: 15px; background: #f1f5f9; padding: 10px; border-radius: 6px;">
+      <div><strong>Finca:</strong> <span id="pdf-print-finca"></span></div>
+      <div><strong>Inicio:</strong> <span id="pdf-print-inicio"></span></div>
+      <div><strong>Ingreso:</strong> <span id="pdf-print-ingreso"></span></div>
+      <div><strong>Ruta:</strong> <span id="pdf-print-ruta"></span></div>
+      <div><strong>Saldo:</strong> <span id="pdf-print-saldo"></span></div>
+      <div><strong>Dispo:</strong> <span id="pdf-print-dispo"></span></div>
+      <div><strong>Teórico:</strong> <span id="pdf-print-teorico"></span></div>
+    </div>
+
+    <h3 style="font-size: 12px; color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Detalle de Unidades Despachadas</h3>
+    <table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 15px;">
+      <thead>
+        <tr style="background: #0284c7; color: white;">
+          <th style="padding: 6px; text-align: left;">Unidad</th>
+          <th style="padding: 6px; text-align: center;">TNS</th>
+          <th style="padding: 6px; text-align: center;">Llega</th>
+          <th style="padding: 6px; text-align: center;">Sale</th>
+          <th style="padding: 6px; text-align: center;">Tipo</th>
+          <th style="padding: 6px; text-align: center;">Estatus</th>
+        </tr>
+      </thead>
+      <tbody id="pdf-print-tbody-camiones"></tbody>
+    </table>
+
+    <div style="font-size: 11px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
+      <strong>Resumen Operativo y Estadísticas:</strong><br>
+      • Toneladas Enviadas: <span id="pdf-print-tons"></span> T | Avance vs. Teórico: <span id="pdf-print-avance"></span><br>
+      • Tiempo Perdido Total: <span id="pdf-print-tiempo"></span> | TNS Perdidas Est.: <span id="pdf-print-tns-perdidas"></span><br>
+      • Eficiencia Operativa: <span id="pdf-print-eficiencia"></span><br>
+      • Promedio Carga (Llega a Sale): <span id="pdf-print-carga"></span><br>
+      • Cada Cuánto Despacha: <span id="pdf-print-frecuencia"></span> | ETA Estimado: <span id="pdf-print-eta"></span><br>
+      • Unidades Requeridas: <span id="pdf-print-req"></span>
+    </div>
+
+    <div style="font-size: 10px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
+      <strong>Desglose por Tipo de Equipo:</strong>
+      <div id="pdf-print-jaulas-resumen" style="margin-top: 4px; color: #334155;"></div>
+    </div>
+
+    <div style="font-size: 10px; background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
+      <strong>Resumen Estadístico y Porcentual de Causas (Pareto):</strong>
+      <div id="pdf-print-pareto-resumen" style="margin-top: 4px; color: #334155;"></div>
+    </div>
+
+    <div style="font-size: 10px; color: #334155;">
+      <strong>Observaciones:</strong>
+      <p id="pdf-print-obs" style="margin: 4px 0 0 0; background: #f1f5f9; padding: 8px; border-radius: 4px; min-height: 30px;"></p>
+    </div>
+  </div>
+
+  <!-- TOASTS DE ALERTA -->
+  <div id="custom-modal-overlay" class="hidden">
+    <div class="glass p-4 rounded-2xl w-full max-w-xs text-center space-y-3 border border-cyan-500/50 shadow-2xl">
+      <div id="custom-modal-icon" class="text-cyan-400 text-xl mb-1"><i class="fas fa-info-circle"></i></div>
+      <p id="custom-modal-message" class="text-xs font-semibold text-sky-100 leading-relaxed font-mono"></p>
+      <div id="custom-modal-buttons" class="flex gap-2 pt-1"></div>
+    </div>
+  </div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      let swCode = `
+        const CACHE_NAME = 'locat-offline-v11';
+        const urlsToCache = ['./', './index.html'];
+        self.addEventListener('install', e => {
+          e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
+        });
+        self.addEventListener('fetch', e => {
+          e.respondWith(
+            caches.match(e.request).then(response => response || fetch(e.request).catch(() => caches.match('./index.html')))
+          );
+        });
+      `;
+      let blob = new Blob([swCode], {type: 'text/javascript'});
+      let swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+    });
+  }
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBvx1odsjS6mX7-Bh9mf0Mjk5ZBm6l_PHM",
+    authDomain: "logistica-campo-transporte.firebaseapp.com",
+    databaseURL: "https://logistica-campo-transporte-default-rtdb.firebaseio.com",
+    projectId: "logistica-campo-transporte",
+    storageBucket: "logistica-campo-transporte.firebasestorage.app",
+    messagingSenderId: "893505736870",
+    appId: "1:893505736870:web:3f19c040f78f46a323e467",
+    measurementId: "G-WXK7F42LHK"
+  };
+
+  let app = null;
+  let auth = null;
+  let db = null;
+
+  try {
+    if (firebaseConfig.apiKey !== "TU_API_KEY") {
+      app = firebase.initializeApp(firebaseConfig);
+      auth = firebase.auth();
+      db = firebase.database();
+    }
+  } catch(e) { console.log(e); }
+
+  let camiones = [];
+  let rolActual = 'invitado';
+  let targetRolPendiente = '';
+  let idCamionSeleccionadoModal = null;
+  let chartFincasInstance = null;
+  let chartCamionesInstance = null;
+  let chartParetoInstance = null;
+  let ultimoEtaEstimado = "--:--";
+  let estadisticasActuales = {
+    avanceTeoricoTexto: "--%",
+    tnsPerdidasTexto: "0.00 T",
+    eficienciaTexto: "--%",
+    promedioCargaTexto: "0 m (Mín: -- | Máx: --)",
+    frecuenciaTexto: "Sin datos (Mín: -- | Máx: --)"
+  };
+
+  window.addEventListener('online', actualizarEstadoConexion);
+  window.addEventListener('offline', actualizarEstadoConexion);
+
+  function toggleBottomNav(mostrar) {
+    const drawer = document.getElementById('bottom-nav-drawer');
+    const handle = document.getElementById('nav-reveal-handle');
+    if (!drawer) return;
+    if (mostrar) {
+      drawer.classList.add('nav-visible');
+      if (handle) handle.classList.add('hidden');
+    } else {
+      drawer.classList.remove('nav-visible');
+      if (handle) handle.classList.remove('hidden');
+    }
+  }
+
+  (function initNavSwipeGesture() {
+    let startX = 0;
+    let startY = 0;
+    document.addEventListener('touchstart', (e) => {
+      if (!e.touches || e.touches.length === 0) return;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+      if (!e.changedTouches || e.changedTouches.length === 0) return;
+      let endX = e.changedTouches[0].clientX;
+      let endY = e.changedTouches[0].clientY;
+      let dx = endX - startX;
+      let dy = endY - startY;
+
+      if ((startY > window.innerHeight - 65 && dy < -30) || (startX < 35 && dx > 45)) {
+        toggleBottomNav(true);
+      } else if (dy > 35 && document.getElementById('bottom-nav-drawer').classList.contains('nav-visible')) {
+        toggleBottomNav(false);
+      }
+    }, { passive: true });
+  })();
+
+  function actualizarEstadoConexion() {
+    const badgeConn = document.getElementById('badge-conexion');
+    if (!badgeConn) return;
+    if (navigator.onLine) {
+      badgeConn.className = 'px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40';
+      badgeConn.innerText = '🟢';
+      sincronizarTurnosPendientesOffline();
+    } else {
+      badgeConn.className = 'px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40';
+      badgeConn.innerText = '📡';
+    }
+  }
+
+  function mostrarAlerta(mensaje, tipo = 'info') {
+    const overlay = document.getElementById('custom-modal-overlay');
+    const msgEl = document.getElementById('custom-modal-message');
+    const iconEl = document.getElementById('custom-modal-icon');
+    const btnContainer = document.getElementById('custom-modal-buttons');
+
+    msgEl.innerText = mensaje;
+    if(tipo === 'success') {
+      iconEl.innerHTML = '<i class="fas fa-check-circle text-emerald-400"></i>';
+    } else if(tipo === 'error') {
+      iconEl.innerHTML = '<i class="fas fa-exclamation-triangle text-red-400"></i>';
+    } else {
+      iconEl.innerHTML = '<i class="fas fa-info-circle text-cyan-400"></i>';
+    }
+
+    btnContainer.innerHTML = `<button onclick="cerrarModalCustom()" class="w-full bg-cyan-600 hover:bg-cyan-500 py-2 rounded-lg text-xs font-bold text-white shadow">Aceptar</button>`;
+    overlay.classList.remove('hidden');
+  }
+
+  function mostrarConfirmacion(mensaje, onConfirmar) {
+    const overlay = document.getElementById('custom-modal-overlay');
+    const msgEl = document.getElementById('custom-modal-message');
+    const iconEl = document.getElementById('custom-modal-icon');
+    const btnContainer = document.getElementById('custom-modal-buttons');
+
+    msgEl.innerText = mensaje;
+    iconEl.innerHTML = '<i class="fas fa-question-circle text-cyan-400"></i>';
+
+    btnContainer.innerHTML = `
+      <button onclick="cerrarModalCustom()" class="w-1/2 bg-slate-800 py-2 rounded-lg text-xs font-bold text-cyan-300 border border-cyan-500/20">Cancelar</button>
+      <button id="btn-custom-confirm" class="w-1/2 bg-cyan-600 py-2 rounded-lg text-xs font-bold text-white shadow">Aceptar</button>
+    `;
+    overlay.classList.remove('hidden');
+
+    document.getElementById('btn-custom-confirm').onclick = () => {
+      cerrarModalCustom();
+      if(onConfirmar) onConfirmar();
+    };
+  }
+
+  function cerrarModalCustom() {
+    document.getElementById('custom-modal-overlay').classList.add('hidden');
+  }
+
+  window.onload = () => {
+    actualizarEstadoConexion();
+    const modalOverlay = document.getElementById('custom-modal-overlay');
+    if (modalOverlay) modalOverlay.classList.add('hidden');
+
+    let currentProgress = 0;
+    const barFill = document.getElementById('loader-bar-fill');
+    const percentText = document.getElementById('loader-percentage');
+    
+    let loadInterval = setInterval(() => {
+      currentProgress += Math.floor(Math.random() * 20) + 10;
+      if (currentProgress >= 100) {
+        currentProgress = 100;
+        clearInterval(loadInterval);
+        setTimeout(() => {
+          const loader = document.getElementById('loader-screen');
+          if(loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 350);
+          }
+        }, 100);
+      }
+      if(barFill) barFill.style.width = currentProgress + '%';
+      if(percentText) percentText.innerText = currentProgress + '%';
+    }, 50);
+
+    let savedTheme = localStorage.getItem('theme_preference') || 'dark';
+    cambiarTemaVisual(savedTheme);
+    aplicarFondoDesdeStorage();
+    
+    if (!localStorage.getItem('logistica_draft')) {
+      document.getElementById('fecha').valueAsDate = new Date();
+    }
+    
+    cargarBorradorLocal();
+
+    let sesionGuardada = localStorage.getItem('sesion_rol') || 'invitado';
+    rolActual = sesionGuardada;
+    document.getElementById('select-rol').value = rolActual;
+    aplicarPermisosRol(rolActual);
+  };
+
+  function recargarPaginaSegura() { location.reload(); }
+
+  function aplicarFondoDesdeStorage() {
+    let customBg = localStorage.getItem('customBg');
+    let temaActual = localStorage.getItem('theme_preference') || 'dark';
+    let overlay = temaActual === 'light' ? 'rgba(248,250,252,0.92)' : 'rgba(3,7,18,0.94)';
+    let defaultImg = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop';
+    document.body.style.backgroundImage = `linear-gradient(${overlay}, ${overlay}), url("${customBg || defaultImg}")`;
+  }
+
+  function cambiarTemaVisual(tema) {
+    const body = document.getElementById('app-body');
+    const selectAdmin = document.getElementById('select-tema-admin');
+    const iconTemaQuick = document.getElementById('icon-tema-quick');
+
+    if (tema === 'light') {
+      body.classList.remove('theme-dark');
+      body.classList.add('theme-light');
+      if(iconTemaQuick) iconTemaQuick.className = 'fas fa-sun text-sm';
+    } else {
+      body.classList.remove('theme-light');
+      body.classList.add('theme-dark');
+      if(iconTemaQuick) iconTemaQuick.className = 'fas fa-moon text-sm';
+    }
+    if (selectAdmin) selectAdmin.value = tema;
+    localStorage.setItem('theme_preference', tema);
+    aplicarFondoDesdeStorage();
+    if (!document.getElementById('modal-graficos').classList.contains('hidden')) {
+      renderizarGraficos();
+    }
+  }
+
+  function alternarTemaRapido() {
+    let temaActual = localStorage.getItem('theme_preference') || 'dark';
+    cambiarTemaVisual(temaActual === 'dark' ? 'light' : 'dark');
+  }
+
+  function abrirMenuFlotante() { document.getElementById('admin-panel').classList.remove('hidden'); }
+
+  function toggleMostrarPassword() {
+    let passInput = document.getElementById('pass-input');
+    let iconEye = document.getElementById('icon-eye-pass');
+    if (passInput.type === 'password') {
+      passInput.type = 'text';
+      iconEye.className = 'fas fa-eye-slash text-sm';
+    } else {
+      passInput.type = 'password';
+      iconEye.className = 'fas fa-eye text-sm';
+    }
+  }
+
+  function seleccionarRol(nuevoRol) {
+    if (nuevoRol === 'invitado') {
+      cerrarSesionCompleta();
+    } else if (nuevoRol === rolActual) {
+      document.getElementById('admin-panel').classList.remove('hidden');
+    } else {
+      targetRolPendiente = nuevoRol;
+      document.getElementById('modal-titulo').innerText = nuevoRol === 'admin' ? 'AUTENTICACIÓN ADMIN' : 'AUTENTICACIÓN MODERADOR';
+      document.getElementById('modal-desc').innerText = `Ingrese sus credenciales para el modo ${nuevoRol}.`;
+      
+      if (nuevoRol === 'moderador') {
+        document.getElementById('email-input').value = 'Invitado1@frente1.com';
+      } else if (nuevoRol === 'admin') {
+        document.getElementById('email-input').value = 'Bmobilaplicaciones@gmail.com';
+      }
+      
+      document.getElementById('pass-input').value = '';
+      document.getElementById('pass-input').type = 'password';
+      document.getElementById('icon-eye-pass').className = 'fas fa-eye text-sm';
+      document.getElementById('login-modal').classList.remove('hidden');
+    }
+  }
+
+  function cerrarLogin() {
+    document.getElementById('login-modal').classList.add('hidden');
+    document.getElementById('select-rol').value = rolActual;
+  }
+
+  function procesarAutenticacionFirebase() {
+    let email = document.getElementById('email-input').value.trim();
+    let pass = document.getElementById('pass-input').value;
+
+    if (!email || !pass) {
+      mostrarAlerta("Por favor ingrese correo y contraseña.", "error");
+      return;
+    }
+
+    if (!navigator.onLine) {
+      rolActual = targetRolPendiente;
+      localStorage.setItem('sesion_rol', rolActual);
+      cerrarLogin();
+      aplicarPermisosRol(rolActual);
+      mostrarAlerta("Modo Offline activo: Sesión validada localmente.", "success");
+      document.getElementById('admin-panel').classList.remove('hidden');
+      return;
+    }
+
+    if (!auth) {
+      mostrarAlerta("Firebase Auth no está inicializado.", "error");
+      return;
+    }
+
+    auth.signInWithEmailAndPassword(email, pass)
+      .then(() => {
+        rolActual = targetRolPendiente;
+        localStorage.setItem('sesion_rol', rolActual);
+        cerrarLogin();
+        aplicarPermisosRol(rolActual);
+        document.getElementById('admin-panel').classList.remove('hidden');
+      })
+      .catch((error) => {
+        mostrarAlerta("Error de autenticación: " + error.message, "error");
+        cerrarLogin();
+      });
+  }
+
+  function aplicarPermisosRol(rol) {
+    const editables = document.querySelectorAll('.campo-editable');
+    const esInvitado = (rol === 'invitado');
+    editables.forEach(el => { el.disabled = esInvitado; });
+
+    document.getElementById('btn-add-camion').style.display = esInvitado ? 'none' : 'flex';
+    document.getElementById('btn-borrador').disabled = esInvitado;
+    document.getElementById('btn-guardar').disabled = esInvitado;
+
+    let badgeRol = document.getElementById('badge-rol-actual');
+    let btnQuickTema = document.getElementById('btn-toggle-tema-quick');
+    let btnLogout = document.getElementById('btn-logout');
+    let seccionWhatsApp = document.getElementById('seccion-whatsapp');
+    let seccionAdmin = document.getElementById('seccion-solo-admin');
+    let tituloHeader = document.getElementById('panel-titulo-header');
+
+    badgeRol.innerText = rol.charAt(0).toUpperCase() + rol.slice(1);
+
+    if (rol === 'admin') {
+      btnQuickTema.classList.remove('hidden');
+      btnLogout.classList.remove('hidden');
+      seccionWhatsApp.classList.remove('hidden');
+      seccionAdmin.classList.remove('hidden');
+      tituloHeader.innerHTML = '<i class="fas fa-cogs mr-1.5"></i>Panel de Administración';
+      document.getElementById('btn-borrador').classList.remove('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-guardar').classList.remove('opacity-50', 'cursor-not-allowed');
+    } else if (rol === 'moderador') {
+      btnQuickTema.classList.remove('hidden');
+      btnLogout.classList.remove('hidden');
+      seccionWhatsApp.classList.remove('hidden');
+      seccionAdmin.classList.add('hidden');
+      tituloHeader.innerHTML = '<i class="fas fa-bars mr-1.5"></i>Menú Moderador';
+      document.getElementById('btn-borrador').classList.remove('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-guardar').classList.remove('opacity-50', 'cursor-not-allowed');
+    } else {
+      btnQuickTema.classList.add('hidden');
+      btnLogout.classList.add('hidden');
+      seccionWhatsApp.classList.add('hidden');
+      seccionAdmin.classList.add('hidden');
+      tituloHeader.innerHTML = '<i class="fas fa-bars mr-1.5"></i>Menú del Sistema';
+      document.getElementById('btn-borrador').classList.add('opacity-50', 'cursor-not-allowed');
+      document.getElementById('btn-guardar').classList.add('opacity-50', 'cursor-not-allowed');
+    }
+    renderizarCamiones();
+  }
+
+  function cerrarSesionCompleta() {
+    if(auth) auth.signOut().catch(() => {});
+    rolActual = 'invitado';
+    localStorage.setItem('sesion_rol', 'invitado');
+    document.getElementById('select-rol').value = 'invitado';
+    cerrarAdminPanel();
+    aplicarPermisosRol('invitado');
+  }
+
+  function agregarFilaCamion(data = null) {
+    if (rolActual === 'invitado') return;
+    const id = Date.now() + Math.random();
+    
+    camiones.push({
+      id: id,
+      unidad: data ? data.unidad : '',
+      tn: data ? data.tn : '',
+      llegada: data ? data.llegada : '',
+      salida: data ? data.salida : '',
+      jaula: data ? data.jaula : 'Penta',
+      estatus: data ? data.estatus : 'En Ruta',
+      basculaMinutos: data ? data.basculaMinutos : 12,
+      razonPerdida: data ? (data.razonPerdida || 'Sin demora registrada') : 'Sin demora registrada',
+      minutosPerdida: data ? (data.minutosPerdida !== undefined ? data.minutosPerdida : 0) : 0
+    });
+    renderizarCamiones();
+    calcularTotalesGenerales();
+    guardarBorradorLocal();
+  }
+
+  function abrirOpcionesFila(id) {
+    if (rolActual === 'invitado') return;
+    idCamionSeleccionadoModal = id;
+    let camion = camiones.find(c => c.id === id);
+    if (!camion) return;
+
+    document.getElementById('modal-fila-info').innerText = `Unidad: ${camion.unidad || 'Sin número'} | TNS: ${camion.tn || '0'}`;
+    document.getElementById('select-razon-perdida').value = camion.razonPerdida || 'Sin demora registrada';
+    
+    let index = camiones.findIndex(c => c.id === id);
+    let gapAuto = index >= 0 ? calcularTiempoPerdidoEntreCamiones(index) : 0;
+    document.getElementById('input-minutos-demora-modal').value = (camion.minutosPerdida !== undefined && camion.minutosPerdida > 0) ? camion.minutosPerdida : gapAuto;
+
+    document.getElementById('modal-opciones-fila').classList.remove('hidden');
+  }
+
+  function cerrarModalFila() {
+    document.getElementById('modal-opciones-fila').classList.add('hidden');
+    idCamionSeleccionadoModal = null;
+  }
+
+  function guardarDatosFilaModal() {
+    if (!idCamionSeleccionadoModal) return;
+    let razon = document.getElementById('select-razon-perdida').value;
+    let minutosDemora = parseFloat(document.getElementById('input-minutos-demora-modal').value) || 0;
+    let camion = camiones.find(c => c.id === idCamionSeleccionadoModal);
+    
+    if (camion) {
+      camion.razonPerdida = razon;
+      camion.minutosPerdida = minutosDemora;
+      guardarBorradorLocal();
+      mostrarAlerta("Demora y razón guardadas con éxito.", "success");
+    }
+    cerrarModalFila();
+    renderizarCamiones();
+    calcularTotalesGenerales();
+  }
+
+  function ejecutarEliminarViajeModal() {
+    if (!idCamionSeleccionadoModal) return;
+    mostrarConfirmacion("¿Deseas eliminar este viaje?", () => {
+      camiones = camiones.filter(c => c.id !== idCamionSeleccionadoModal);
+      renderizarCamiones();
+      calcularTotalesGenerales();
+      guardarBorradorLocal();
+      cerrarModalFila();
+    });
+  }
+
+  function actualizarCamion(id, campo, valor) {
+    if (rolActual === 'invitado') return;
+    let c = camiones.find(item => item.id === id);
+    if(c) {
+      c[campo] = valor;
+      if(campo === 'llegada' || campo === 'salida') {
+        renderizarCamiones();
+      }
+      calcularTotalesGenerales();
+      guardarBorradorLocal();
+    }
+  }
+
+  function calcularMinutosEntreTiempos(horaAnterior, horaActual) {
+    if (!horaAnterior || !horaActual) return 0;
+    let [h1, m1] = horaAnterior.split(':').map(Number);
+    let [h2, m2] = horaActual.split(':').map(Number);
+    let min1 = h1 * 60 + m1;
+    let min2 = h2 * 60 + m2;
+    let diff = min2 - min1;
+    if (diff < 0) {
+      diff += 24 * 60;
+    }
+    if (diff > 720) return 0;
+    return diff;
+  }
+
+  function calcularTiempoPerdidoEntreCamiones(index) {
+    let camionActual = camiones[index];
+    if (!camionActual) return 0;
+    if (camionActual.minutosPerdida !== undefined && camionActual.minutosPerdida > 0) {
+      return camionActual.minutosPerdida;
+    }
+    if (!camionActual.llegada) return 0;
+
+    if (index === 0) {
+      let horaInicioTurno = document.getElementById('hora-inicio-turno') ? document.getElementById('hora-inicio-turno').value : '';
+      return horaInicioTurno ? calcularMinutosEntreTiempos(horaInicioTurno, camionActual.llegada) : 0;
+    }
+
+    let salidaAnterior = camiones[index - 1].salida || camiones[index - 1].llegada;
+    return calcularMinutosEntreTiempos(salidaAnterior, camionActual.llegada);
+  }
+
+  function formatearMinutosAhoras(minutosTotales) {
+    if (!minutosTotales || minutosTotales <= 0) return "0 min";
+    if (minutosTotales < 60) return `${minutosTotales} min`;
+    let horas = Math.floor(minutosTotales / 60);
+    let mins = minutosTotales % 60;
+    if (mins === 0 && horas > 1) return `${horas}:00 hrs`;
+    return `${horas}:${mins < 10 ? '0'+mins : mins} hrs`;
+  }
+
+  function calcularEstadisticasDespacho() {
+    let salidas = camiones.map(c => c.salida).filter(Boolean);
+    let intervalos = [];
+    for (let i = 1; i < salidas.length; i++) {
+      let diff = calcularMinutosEntreTiempos(salidas[i - 1], salidas[i]);
+      if (diff > 0 && diff < 480) intervalos.push(diff);
+    }
+
+    if (intervalos.length === 0) {
+      let llegadas = camiones.map(c => c.llegada).filter(Boolean);
+      for (let i = 1; i < llegadas.length; i++) {
+        let diff = calcularMinutosEntreTiempos(llegadas[i - 1], llegadas[i]);
+        if (diff > 0 && diff < 480) intervalos.push(diff);
+      }
+    }
+
+    if (intervalos.length === 0) {
+      return { promedio: 0, min: null, max: null, texto: "Sin datos (Mín: -- | Máx: --)" };
+    }
+
+    let min = Math.min(...intervalos);
+    let max = Math.max(...intervalos);
+    let promedio = Math.round(intervalos.reduce((a, b) => a + b, 0) / intervalos.length);
+    return {
+      promedio,
+      min,
+      max,
+      texto: `Cada ${formatearMinutosAhoras(promedio)} (Mín: ${min}m | Máx: ${max}m)`
+    };
+  }
+
+  function calcularEstadisticasCarga() {
+    let tiemposCarga = [];
+    camiones.forEach(c => {
+      if (c.llegada && c.salida) {
+        let diff = calcularMinutosEntreTiempos(c.llegada, c.salida);
+        if (diff > 0 && diff < 480) tiemposCarga.push(diff);
+      }
+    });
+
+    if (tiemposCarga.length === 0) {
+      return { promedio: 0, min: null, max: null, textoCorto: "0 m", textoDetalle: "Sin datos (Mín: -- | Máx: --)" };
+    }
+
+    let min = Math.min(...tiemposCarga);
+    let max = Math.max(...tiemposCarga);
+    let promedio = Math.round(tiemposCarga.reduce((a, b) => a + b, 0) / tiemposCarga.length);
+    return {
+      promedio,
+      min,
+      max,
+      textoCorto: `${promedio} m`,
+      textoDetalle: `${promedio} min (Mín: ${min}m | Máx: ${max}m)`
+    };
+  }
+
+  function obtenerDesglosePorJaula() {
+    const ordenTipos = ['Doble', 'Triple', 'tetra', 'Penta', 'Hexa'];
+    const mapa = {};
+    ordenTipos.forEach(t => { mapa[t] = { viajes: 0, tons: 0 }; });
+
+    camiones.forEach(c => {
+      let tipo = c.jaula || 'Penta';
+      if (!mapa[tipo]) mapa[tipo] = { viajes: 0, tons: 0 };
+      mapa[tipo].viajes += 1;
+      mapa[tipo].tons += (parseFloat(c.tn) || 0);
+    });
+    return mapa;
+  }
+
+  function renderizarCamiones() {
+    const contenedor = document.getElementById('contenedor-camiones');
+    contenedor.innerHTML = '';
+    
+    const badgeDsp = document.getElementById('badge-total-dsp');
+    if (badgeDsp) badgeDsp.innerText = `${camiones.length} dsp`;
+
+    if(camiones.length === 0) {
+      contenedor.innerHTML = '<tr><td colspan="7" class="text-center text-xs text-sky-300/75 font-mono py-3">Sin unidades registradas.</td></tr>';
+      return;
+    }
+
+    const disabledAttr = rolActual === 'invitado' ? 'disabled' : '';
+
+    camiones.forEach((c, index) => {
+      let tr = document.createElement('tr');
+      let esDemoraExcesiva = false;
+      if (c.llegada && c.salida) {
+        let minCarga = calcularMinutosEntreTiempos(c.llegada, c.salida);
+        if (minCarga > 45 || (c.basculaMinutos && c.basculaMinutos > 30)) esDemoraExcesiva = true;
+      }
+
+      let isLight = document.body.classList.contains('theme-light');
+      if (esDemoraExcesiva) {
+        tr.className = isLight ? 'border-b border-red-300 bg-red-100 border-l-4 border-red-500 cursor-pointer' : 'border-b border-red-500/50 bg-red-950/70 border-l-4 border-red-500 cursor-pointer';
+      } else {
+        tr.className = isLight ? 'border-b border-slate-200 hover:bg-slate-100 cursor-pointer' : 'border-b border-cyan-950/40 hover:bg-slate-900/40 cursor-pointer';
+      }
+
+      tr.onclick = (e) => {
+        if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+        abrirOpcionesFila(c.id);
+      };
+
+      let perd = calcularTiempoPerdidoEntreCamiones(index);
+      
+      tr.innerHTML = `
+        <td class="py-0.5 px-0.5"><input type="text" maxlength="12" class="glass-input text-xs font-mono font-bold px-1 ${esDemoraExcesiva ? (isLight ? 'text-red-700' : 'text-red-300') : ''}" value="${c.unidad || ''}" placeholder="42-400" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'unidad', this.value)"></td>
+        <td class="py-0.5 px-0.5"><input type="number" maxlength="4" class="glass-input text-xs font-mono font-bold text-center px-0.5" value="${c.tn || ''}" placeholder="45" ${disabledAttr} oninput="actualizarCamion(${c.id}, 'tn', parseFloat(this.value)||'')"></td>
+        <td class="py-0.5 px-0.5"><input type="time" class="glass-input text-[11px] font-mono p-0.5 text-center" value="${c.llegada || ''}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'llegada', this.value)"></td>
+        <td class="py-0.5 px-0.5"><input type="time" class="glass-input text-[11px] font-mono p-0.5 text-center" value="${c.salida || ''}" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'salida', this.value)"></td>
+        <td class="py-0.5 px-0.5">
+          <select class="glass-input text-[11px] font-mono font-bold bg-slate-900 px-0.5 truncate" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'jaula', this.value)">
+            <option value="Doble" ${c.jaula === 'Doble' ? 'selected' : ''}>Doble</option>
+            <option value="Triple" ${c.jaula === 'Triple' ? 'selected' : ''}>Triple</option>
+            <option value="tetra" ${c.jaula === 'tetra' ? 'selected' : ''}>tetra</option>
+            <option value="Penta" ${c.jaula === 'Penta' ? 'selected' : ''}>Penta</option>
+            <option value="Hexa" ${c.jaula === 'Hexa' ? 'selected' : ''}>Hexa</option>
+          </select>
+        </td>
+        <td class="py-0.5 px-0.5">
+          <select class="glass-input text-[11px] font-mono font-bold bg-slate-900 px-0.5 truncate" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'estatus', this.value)">
+            <option value="En Ruta" ${c.estatus === 'En Ruta' ? 'selected' : ''}>🟢 Va en Ruta</option>
+            <option value="Viene en ruta" ${c.estatus === 'Viene en ruta' ? 'selected' : ''}>⚪ Viene en ruta</option>
+            <option value="En Cola" ${c.estatus === 'En Cola' ? 'selected' : ''}>🟡 Cola</option>
+            <option value="Cargando" ${c.estatus === 'Cargando' ? 'selected' : ''}>🔵 Cargando</option>
+            <option value="Báscula" ${c.estatus === 'Báscula' ? 'selected' : ''}>🟣 Despues de Básc.</option>
+            <option value="Demorado" ${c.estatus === 'Demorado' ? 'selected' : ''}>🔴 Demorado.</option>
+          </select>
+        </td>
+        <td class="py-0.5 px-0.5 ${perd > 30 ? 'text-red-400' : (isLight ? 'text-amber-700' : 'text-amber-300')} font-mono font-extrabold text-center text-xs" title="${c.razonPerdida || 'Sin demora'}">${perd}m</td>
+      `;
+      contenedor.appendChild(tr);
+    });
+  }
+
+  function calcularTotalesGenerales() {
+    let ingreso = parseFloat(document.getElementById('ingreso-general').value) || 0;
+    let ruta = parseFloat(document.getElementById('ruta').value) || 0;
+    let saldo = parseFloat(document.getElementById('saldo').value) || 0;
+    let teorico = parseFloat(document.getElementById('dispo-teorica').value) || 0;
+
+    let tonsEnviadasTotal = camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0);
+    let saldoHora = saldo - tonsEnviadasTotal;
+    let dispoCalc = ruta + ingreso + saldoHora;
+    document.getElementById('dispo').value = dispoCalc.toFixed(2);
+
+    // 1. Cumplimiento vs. Disponible Teórico (% Avance)
+    let avancePctTexto = "--%";
+    if (teorico > 0) {
+      let pct = (dispoCalc / teorico) * 100;
+      avancePctTexto = `${pct.toFixed(1)}%`;
+    }
+    
+    let tiempoPerdidoTotal = 0;
+    for (let i = 0; i < camiones.length; i++) {
+      tiempoPerdidoTotal += calcularTiempoPerdidoEntreCamiones(i);
+    }
+
+    let tnPrimeraLinea = camiones.length > 0 ? (parseFloat(camiones[0].tn) || 0) : 0;
+    let unidadesRequeridas = tnPrimeraLinea > 0 ? (saldoHora / tnPrimeraLinea) : 0;
+
+    let intervaloBase = 25;
+    let ciclosValidos = [];
+    for (let i = 1; i < camiones.length; i++) {
+      if (camiones[i - 1].llegada && camiones[i].llegada) {
+        let d = calcularMinutosEntreTiempos(camiones[i - 1].llegada, camiones[i].llegada);
+        if (d > 0 && d < 300) ciclosValidos.push(d);
+      }
+    }
+    if (ciclosValidos.length > 0) {
+      intervaloBase = Math.round(ciclosValidos.reduce((a, b) => a + b, 0) / ciclosValidos.length);
+    }
+
+    let ultimaLlegadaConHora = null;
+    for (let i = camiones.length - 1; i >= 0; i--) {
+      if (camiones[i].llegada) {
+        ultimaLlegadaConHora = camiones[i].llegada;
+        break;
+      }
+    }
+
+    if (ultimaLlegadaConHora) {
+      let [lh, lm] = ultimaLlegadaConHora.split(':').map(Number);
+      let totalMins = lh * 60 + lm + intervaloBase;
+      let eh = Math.floor(totalMins / 60) % 24;
+      let em = totalMins % 60;
+      ultimoEtaEstimado = `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`;
+    } else if (camiones.length === 0) {
+      ultimoEtaEstimado = "--:--";
+    }
+    document.getElementById('res-eta-proximo').innerText = ultimoEtaEstimado;
+
+    let ritmo = 0;
+    let camionesConHoras = camiones.filter(c => c.llegada && c.salida);
+    if (camionesConHoras.length >= 2) {
+      let minutosTotal = calcularMinutosEntreTiempos(camionesConHoras[0].llegada, camionesConHoras[camionesConHoras.length - 1].salida);
+      if (minutosTotal > 0) ritmo = (tonsEnviadasTotal / minutosTotal) * 60;
+    } else if (camionesConHoras.length === 1) {
+      let minutos = calcularMinutosEntreTiempos(camionesConHoras[0].llegada, camionesConHoras[0].salida);
+      if (minutos > 0) ritmo = ((parseFloat(camionesConHoras[0].tn) || 0) / minutos) * 60;
+    }
+
+    // 2. Toneladas perdidas estimadas (TNS Perdidas)
+    let tnsPerdidasEst = (tiempoPerdidoTotal / 60) * ritmo;
+    let tnsPerdidasTexto = `${tnsPerdidasEst.toFixed(2)} T`;
+
+    // 3. Eficiencia de tiempo operativo (% Efectivo)
+    let horaInicioTurno = document.getElementById('hora-inicio-turno') ? document.getElementById('hora-inicio-turno').value : '';
+    let primeraHoraRef = horaInicioTurno || (camiones.find(c => c.llegada)?.llegada || '');
+    let ultimaHoraRef = null;
+    for (let i = camiones.length - 1; i >= 0; i--) {
+      if (camiones[i].salida || camiones[i].llegada) {
+        ultimaHoraRef = camiones[i].salida || camiones[i].llegada;
+        break;
+      }
+    }
+
+    let eficienciaTexto = "--%";
+    if (primeraHoraRef && ultimaHoraRef) {
+      let ventanaTurnoMin = calcularMinutosEntreTiempos(primeraHoraRef, ultimaHoraRef);
+      if (ventanaTurnoMin > 0) {
+        let tiempoEfectivo = Math.max(0, ventanaTurnoMin - tiempoPerdidoTotal);
+        let pctEf = Math.min(100, (tiempoEfectivo / ventanaTurnoMin) * 100);
+        eficienciaTexto = `${pctEf.toFixed(0)}%`;
+      }
+    }
+
+    let cadenciaPromedioMinutos = ciclosValidos.length > 0 ? intervaloBase : 0;
+
+    // 4. Tiempo promedio de carga (Llega a Sale)
+    let cargaStats = calcularEstadisticasCarga();
+
+    let promedioLlenadoJaula = 0;
+    let factorMultiplicadorJaula = 1.0;
+    let ultimaJaula = camiones.length > 0 ? (camiones[camiones.length - 1].jaula || 'Penta') : 'Penta';
+    
+    if (ultimaJaula === 'Doble') factorMultiplicadorJaula = 0.7;
+    else if (ultimaJaula === 'Triple') factorMultiplicadorJaula = 0.85;
+    else if (ultimaJaula === 'tetra') factorMultiplicadorJaula = 1.0;
+    else if (ultimaJaula === 'Penta') factorMultiplicadorJaula = 1.2;
+    else if (ultimaJaula === 'Hexa') factorMultiplicadorJaula = 1.4;
+
+    if (camionesConHoras.length > 0) {
+      let sumaMinutosCarga = 0;
+      camionesConHoras.forEach(c => {
+        let minCarga = calcularMinutosEntreTiempos(c.llegada, c.salida);
+        if (minCarga > 0) sumaMinutosCarga += minCarga;
+      });
+      promedioLlenadoJaula = Math.round((sumaMinutosCarga / camionesConHoras.length) * factorMultiplicadorJaula);
+    } else {
+      promedioLlenadoJaula = Math.round(35 * factorMultiplicadorJaula);
+    }
+
+    let freqStats = calcularEstadisticasDespacho();
+
+    estadisticasActuales = {
+      avanceTeoricoTexto: avancePctTexto,
+      tnsPerdidasTexto: tnsPerdidasTexto,
+      eficienciaTexto: eficienciaTexto,
+      promedioCargaTexto: cargaStats.textoDetalle,
+      frecuenciaTexto: freqStats.texto
+    };
+
+    document.getElementById('res-tons-enviadas').innerText = tonsEnviadasTotal.toFixed(2);
+    document.getElementById('res-avance-teorico').innerText = avancePctTexto;
+    document.getElementById('res-falta-transporte').innerText = formatearMinutosAhoras(tiempoPerdidoTotal);
+    document.getElementById('res-tns-perdidas').innerText = tnsPerdidasTexto;
+    document.getElementById('res-saldo-hora').innerText = saldoHora.toFixed(2);
+    document.getElementById('res-eficiencia-operativa').innerText = eficienciaTexto;
+    document.getElementById('res-unidades-requeridas').innerText = unidadesRequeridas.toFixed(2);
+    document.getElementById('res-ritmo-despacho').innerText = `${ritmo.toFixed(2)} T/h`;
+    document.getElementById('res-ritmo-transporte').innerText = `Cada ${cadenciaPromedioMinutos} m`;
+    document.getElementById('res-promedio-carga').innerText = cargaStats.textoCorto;
+    document.getElementById('res-ritmo-jaula').innerText = `${promedioLlenadoJaula} m`;
+    document.getElementById('res-frecuencia-despacho').innerText = freqStats.texto;
+  }
+
+  function abrirModalGraficos() {
+    document.getElementById('modal-graficos').classList.remove('hidden');
+    renderizarGraficos();
+  }
+
+  function cerrarModalGraficos() { document.getElementById('modal-graficos').classList.add('hidden'); }
+
+  function obtenerResumenDemorasCalculado() {
+    let resumenDemoras = {};
+    for (let i = 0; i < camiones.length; i++) {
+      let minPerdidos = calcularTiempoPerdidoEntreCamiones(i);
+      let razon = camiones[i].razonPerdida || 'Sin demora registrada';
+      if (minPerdidos > 0) {
+        resumenDemoras[razon] = (resumenDemoras[razon] || 0) + minPerdidos;
+      }
+    }
+    return resumenDemoras;
+  }
+
+  function renderizarGraficos() {
+    let nombreFincaActual = document.getElementById('finca').value || 'Finca Actual';
+    let tonsTotalesFinca = parseFloat(document.getElementById('res-tons-enviadas').innerText) || 0;
+    let isLight = document.body.classList.contains('theme-light');
+    let textColor = isLight ? '#0f172a' : '#f1f5f9';
+
+    const ctxFincas = document.getElementById('chartFincas').getContext('2d');
+    if (chartFincasInstance) chartFincasInstance.destroy();
+
+    chartFincasInstance = new Chart(ctxFincas, {
+      type: 'doughnut',
+      data: {
+        labels: [nombreFincaActual, 'Resto'],
+        datasets: [{
+          data: [tonsTotalesFinca, tonsTotalesFinca > 0 ? 0 : 1],
+          backgroundColor: [isLight ? '#0284c7' : '#06b6d4', isLight ? '#cbd5e1' : '#1e293b'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: textColor, font: { size: 10, family: 'sans-serif' } } } }
+      }
+    });
+
+    const ctxCamiones = document.getElementById('chartCamiones').getContext('2d');
+    if (chartCamionesInstance) chartCamionesInstance.destroy();
+
+    let labelsCamiones = camiones.map((c, i) => c.unidad ? `${c.unidad}` : `#${i+1}`);
+    let dataTonsCamiones = camiones.map(c => parseFloat(c.tn) || 0);
+
+    chartCamionesInstance = new Chart(ctxCamiones, {
+      type: 'bar',
+      data: {
+        labels: labelsCamiones.length > 0 ? labelsCamiones : ['Sin datos'],
+        datasets: [{
+          data: dataTonsCamiones.length > 0 ? dataTonsCamiones : [0],
+          backgroundColor: isLight ? '#16a34a' : '#10b981',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: isLight ? '#475569' : '#94a3b8', font: { size: 10, family: 'sans-serif' } } },
+          y: { ticks: { color: isLight ? '#475569' : '#94a3b8', font: { size: 10, family: 'sans-serif' } } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    // 5. Desglose por tipo de jaula en modal
+    let mapaJaulas = obtenerDesglosePorJaula();
+    let htmlJaulas = '';
+    Object.keys(mapaJaulas).forEach(tipo => {
+      let item = mapaJaulas[tipo];
+      if (item.viajes > 0) {
+        htmlJaulas += `• <b>${tipo}</b>: ${item.viajes} viaje(s) — <span class="text-emerald-400 font-bold">${item.tons.toFixed(2)} T</span><br>`;
+      }
+    });
+    document.getElementById('dashboard-resumen-jaulas').innerHTML = htmlJaulas || 'Sin viajes registrados.';
+
+    /* GRÁFICO DE PARETO */
+    const ctxPareto = document.getElementById('chartParetoDemoras').getContext('2d');
+    if (chartParetoInstance) chartParetoInstance.destroy();
+
+    let resumenDemoras = obtenerResumenDemorasCalculado();
+    let totalMinPerdidos = Object.values(resumenDemoras).reduce((a,b)=>a+b, 0);
+    
+    let labelsPareto = Object.keys(resumenDemoras);
+    let dataPareto = Object.values(resumenDemoras);
+
+    if (labelsPareto.length === 0) {
+      labelsPareto = ['Sin demoras registradas'];
+      dataPareto = [0];
+    }
+
+    chartParetoInstance = new Chart(ctxPareto, {
+      type: 'bar',
+      data: {
+        labels: labelsPareto,
+        datasets: [{
+          label: 'Minutos',
+          data: dataPareto,
+          backgroundColor: '#f59e0b',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { ticks: { color: isLight ? '#475569' : '#94a3b8', font: { size: 10, family: 'sans-serif' } } },
+          y: { ticks: { color: isLight ? '#475569' : '#94a3b8', font: { size: 10, family: 'sans-serif' } } }
+        },
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    let listaDemorasHtml = "";
+    if (Object.keys(resumenDemoras).length === 0) {
+      listaDemorasHtml = "Sin demoras registradas en el turno.";
+    } else {
+      for (let razon in resumenDemoras) {
+        let mins = resumenDemoras[razon];
+        let pct = totalMinPerdidos > 0 ? Math.round((mins / totalMinPerdidos) * 100) : 0;
+        listaDemorasHtml += `• ${razon}: <b>${mins} min</b> (<span class="text-amber-400 font-bold">${pct}%</span>)<br>`;
+      }
+    }
+    document.getElementById('dashboard-lista-demoras').innerHTML = listaDemorasHtml;
+  }
+
+  function compartirWhatsApp() {
+    let frente = document.getElementById('wa-frente').value || 'Frente 1';
+    let turno = document.getElementById('wa-turno').value || 'Turno A 06:00 a 18:00';
+    let enProceso = document.getElementById('wa-proceso').value || '0';
+    let enCola = document.getElementById('wa-cola').value || '0';
+    let enRuta = document.getElementById('wa-ruta-frente').value || 'Ninguno';
+
+    let finca = document.getElementById('finca').value || 'Finca Sin Nombre';
+    let tiempoPerdidoTotalMin = 0;
+    for (let i = 0; i < camiones.length; i++) {
+      tiempoPerdidoTotalMin += calcularTiempoPerdidoEntreCamiones(i);
+    }
+    let tiempoPerdidoText = formatearMinutosAhoras(tiempoPerdidoTotalMin);
+    let freqStats = calcularEstadisticasDespacho();
+
+    let fechaRaw = document.getElementById('fecha').value;
+    let fechaFormat = 'DD-MM-YY';
+    if (fechaRaw) {
+      let partes = fechaRaw.split('-');
+      fechaFormat = `${partes[2]}-${partes[1]}-${partes[0].slice(-2)}`;
+    }
+
+    let ahora = new Date();
+    let horaActual = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    let despachadosCount = camiones.length;
+
+    let listaCamionesTexto = "";
+    if (camiones.length > 0) {
+      camiones.forEach((c, index) => {
+        let nomUnidad = c.unidad ? c.unidad : 'S/U';
+        let jaulaTipo = c.jaula || 'Penta';
+        let estatusText = c.estatus ? `[${c.estatus}]` : '';
+        listaCamionesTexto += `${index + 1}. ${nomUnidad} (${jaulaTipo}) ${estatusText}\n`;
+      });
+    } else {
+      listaCamionesTexto = "Sin unidades despachadas.\n";
+    }
+
+    let texto = `*${frente}*\n\n` +
+                `📆 *Fecha:* *${fechaFormat}*\n` +
+                `🔄 *Turno: ${turno}*\n` +
+                `🕜 *Hora:* ${horaActual}\n` +
+                `✅ *Despachados:* ${despachadosCount}\n\n` +
+                `\`${finca}\`\n\n` +
+                `${listaCamionesTexto}\n` +
+                `En proceso: ${enProceso}\n` +
+                `En cola: ${enCola}\n` +
+                `En ruta para el frente: ${enRuta}\n\n` +
+                `⏱️ Tiempo perdido: ${tiempoPerdidoText}\n` +
+                `🚛 Despacho: ${freqStats.texto} | ETA: ${ultimoEtaEstimado}`;
+
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+  }
+
+  function generarReportePDF() {
+    let freqStats = calcularEstadisticasDespacho();
+    document.getElementById('pdf-print-fecha-frente').innerText = `Fecha: ${document.getElementById('fecha').value} | Turno Operativo`;
+    document.getElementById('pdf-print-finca').innerText = `${document.getElementById('finca').value} (${document.getElementById('codigo-finca').value})`;
+    document.getElementById('pdf-print-inicio').innerText = document.getElementById('hora-inicio-turno').value || '--:--';
+    document.getElementById('pdf-print-ingreso').innerText = document.getElementById('ingreso-general').value || '0';
+    document.getElementById('pdf-print-ruta').innerText = document.getElementById('ruta').value || '0';
+    document.getElementById('pdf-print-saldo').innerText = document.getElementById('saldo').value || '0';
+    document.getElementById('pdf-print-dispo').innerText = document.getElementById('dispo').value || '0';
+    document.getElementById('pdf-print-teorico').innerText = document.getElementById('dispo-teorica').value || '0';
+    
+    document.getElementById('pdf-print-tons').innerText = document.getElementById('res-tons-enviadas').innerText;
+    document.getElementById('pdf-print-avance').innerText = estadisticasActuales.avanceTeoricoTexto;
+    document.getElementById('pdf-print-tiempo').innerText = document.getElementById('res-falta-transporte').innerText;
+    document.getElementById('pdf-print-tns-perdidas').innerText = estadisticasActuales.tnsPerdidasTexto;
+    document.getElementById('pdf-print-eficiencia').innerText = estadisticasActuales.eficienciaTexto;
+    document.getElementById('pdf-print-carga').innerText = estadisticasActuales.promedioCargaTexto;
+    document.getElementById('pdf-print-frecuencia').innerText = freqStats.texto;
+    document.getElementById('pdf-print-eta').innerText = ultimoEtaEstimado;
+    document.getElementById('pdf-print-req').innerText = document.getElementById('res-unidades-requeridas').innerText;
+    document.getElementById('pdf-print-obs').innerText = document.getElementById('obs').value || 'Sin observaciones registradas.';
+
+    let mapaJaulas = obtenerDesglosePorJaula();
+    let htmlJaulasPDF = '';
+    Object.keys(mapaJaulas).forEach(tipo => {
+      let item = mapaJaulas[tipo];
+      if (item.viajes > 0) {
+        htmlJaulasPDF += `• ${tipo}: <b>${item.viajes}</b> viaje(s) — <b>${item.tons.toFixed(2)} T</b><br>`;
+      }
+    });
+    document.getElementById('pdf-print-jaulas-resumen').innerHTML = htmlJaulasPDF || '• Sin viajes registrados en el turno.';
+
+    let resumenDemorasPDF = obtenerResumenDemorasCalculado();
+    let totalMinPerdidosShift = Object.values(resumenDemorasPDF).reduce((a,b)=>a+b, 0);
+    let paretoHTMLPDF = '';
+    if (Object.keys(resumenDemorasPDF).length === 0) {
+      paretoHTMLPDF = '• Sin demoras registradas en el turno.';
+    } else {
+      for (let razon in resumenDemorasPDF) {
+        let mins = resumenDemorasPDF[razon];
+        let pct = totalMinPerdidosShift > 0 ? Math.round((mins / totalMinPerdidosShift) * 100) : 0;
+        paretoHTMLPDF += `• ${razon}: <b>${mins} min</b> (${pct}%)<br>`;
+      }
+    }
+    document.getElementById('pdf-print-pareto-resumen').innerHTML = paretoHTMLPDF;
+
+    let tbodyPrint = document.getElementById('pdf-print-tbody-camiones');
+    tbodyPrint.innerHTML = '';
+
+    if (camiones.length === 0) {
+      tbodyPrint.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 8px; color: #64748b;">Sin unidades registradas.</td></tr>';
+    } else {
+      camiones.forEach(c => {
+        let tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #e2e8f0';
+        tr.innerHTML = `
+          <td style="padding: 6px; font-weight: bold;">${c.unidad || 'S/U'}</td>
+          <td style="padding: 6px; text-align: center;">${c.tn || '0'}</td>
+          <td style="padding: 6px; text-align: center;">${c.llegada || '--:--'}</td>
+          <td style="padding: 6px; text-align: center;">${c.salida || '--:--'}</td>
+          <td style="padding: 6px; text-align: center;">${c.jaula || 'Penta'}</td>
+          <td style="padding: 6px; text-align: center;">${c.estatus || 'En Ruta'}</td>
+        `;
+        tbodyPrint.appendChild(tr);
+      });
+    }
+
+    let elementoReporte = document.getElementById('print-report-container');
+    elementoReporte.style.display = 'block';
+
+    let opt = {
+      margin:       10,
+      filename:     `Reporte_Turno_${document.getElementById('finca').value || 'Finca'}_${document.getElementById('fecha').value}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().from(elementoReporte).set(opt).save().then(() => {
+      elementoReporte.style.display = 'none';
+      mostrarAlerta("PDF generado y descargado con éxito.", "success");
+    }).catch(err => {
+      elementoReporte.style.display = 'none';
+      mostrarAlerta("Error al generar PDF: " + err.message, "error");
+    });
+  }
+
+  function limpiarFormularioCompleto() {
+    document.getElementById('fecha').valueAsDate = new Date();
+    document.getElementById('hora-inicio-turno').value = '';
+    document.getElementById('ingreso-general').value = '';
+    document.getElementById('finca').value = '';
+    document.getElementById('codigo-finca').value = '';
+    document.getElementById('ruta').value = '';
+    document.getElementById('saldo').value = '';
+    document.getElementById('dispo').value = '';
+    document.getElementById('dispo-teorica').value = '';
+    document.getElementById('obs').value = '';
+    ultimoEtaEstimado = "--:--";
+    camiones = [];
+    renderizarCamiones();
+    calcularTotalesGenerales();
+    localStorage.removeItem('logistica_draft');
+  }
+
+  function guardarBorradorLocal() {
+    let data = {
+      fecha: document.getElementById('fecha').value,
+      horaInicioTurno: document.getElementById('hora-inicio-turno').value,
+      ingreso: document.getElementById('ingreso-general').value,
+      finca: document.getElementById('finca').value,
+      codigoFinca: document.getElementById('codigo-finca').value,
+      ruta: document.getElementById('ruta').value,
+      saldo: document.getElementById('saldo').value,
+      dispo: document.getElementById('dispo').value,
+      dispoTeorica: document.getElementById('dispo-teorica').value,
+      obs: document.getElementById('obs').value,
+      camiones: camiones,
+      waFrente: document.getElementById('wa-frente').value,
+      waTurno: document.getElementById('wa-turno').value,
+      waProceso: document.getElementById('wa-proceso').value,
+      waCola: document.getElementById('wa-cola').value,
+      waRutaFrente: document.getElementById('wa-ruta-frente').value
+    };
+    localStorage.setItem('logistica_draft', JSON.stringify(data));
+  }
+
+  function sincronizarBorrador() {
+    if (rolActual === 'invitado') return;
+    guardarBorradorLocal();
+    mostrarAlerta("Borrador guardado localmente.", "success");
+  }
+
+  function cargarBorradorLocal() {
+    let draft = localStorage.getItem('logistica_draft');
+    if(draft) {
+      let d = JSON.parse(draft);
+      document.getElementById('fecha').value = d.fecha || '';
+      document.getElementById('hora-inicio-turno').value = d.horaInicioTurno || '';
+      document.getElementById('ingreso-general').value = d.ingreso || '';
+      document.getElementById('finca').value = d.finca || '';
+      document.getElementById('codigo-finca').value = d.codigoFinca || '';
+      document.getElementById('ruta').value = d.ruta || '';
+      document.getElementById('saldo').value = d.saldo || '';
+      document.getElementById('dispo').value = d.dispo || '';
+      if(d.dispoTeorica) document.getElementById('dispo-teorica').value = d.dispoTeorica;
+      document.getElementById('obs').value = d.obs || '';
+      if (d.waFrente) document.getElementById('wa-frente').value = d.waFrente;
+      if (d.waTurno) document.getElementById('wa-turno').value = d.waTurno;
+      if (d.waProceso) document.getElementById('wa-proceso').value = d.waProceso;
+      if (d.waCola) document.getElementById('wa-cola').value = d.waCola;
+      if (d.waRutaFrente) document.getElementById('wa-ruta-frente').value = d.waRutaFrente;
+      camiones = d.camiones || [];
+      renderizarCamiones();
+      calcularTotalesGenerales();
+    }
+  }
+
+  function confirmarGuardarTurno() {
+    if (rolActual === 'invitado') return;
+    
+    mostrarConfirmacion("¿Confirmas guardar el turno completo?", () => {
+      let tonsEnviadasTotal = camiones.reduce((acc, c) => acc + (parseFloat(c.tn) || 0), 0);
+      let tiempoPerdidoTotal = 0;
+      for (let i = 0; i < camiones.length; i++) {
+        tiempoPerdidoTotal += calcularTiempoPerdidoEntreCamiones(i);
+      }
+
+      let payload = {
+        fecha: document.getElementById('fecha').value || new Date().toISOString().split('T')[0],
+        horaInicioTurno: document.getElementById('hora-inicio-turno').value || '',
+        ingreso: parseFloat(document.getElementById('ingreso-general').value) || 0,
+        finca: document.getElementById('finca').value || 'N/D',
+        codigoFinca: document.getElementById('codigo-finca').value || 'N/D',
+        ruta: parseFloat(document.getElementById('ruta').value) || 0,
+        saldo: parseFloat(document.getElementById('saldo').value) || 0,
+        dispo: parseFloat(document.getElementById('dispo').value) || 0,
+        dispoTeorica: parseFloat(document.getElementById('dispo-teorica').value) || 0,
+        tonsEnviadas: tonsEnviadasTotal,
+        tiempoPerdidoTotal: tiempoPerdidoTotal,
+        unidadesRequeridas: parseFloat(document.getElementById('res-unidades-requeridas').innerText) || 0,
+        totalUnidades: camiones.length,
+        obs: document.getElementById('obs').value || '',
+        camiones: camiones,
+        timestamp: Date.now()
+      };
+
+      if (!navigator.onLine || !db) {
+        let colaOffline = JSON.parse(localStorage.getItem('cola_registros_offline') || '[]');
+        colaOffline.push(payload);
+        localStorage.setItem('cola_registros_offline', JSON.stringify(colaOffline));
+        mostrarAlerta("Sin señal: Turno guardado en cola local offline.", "success");
+        limpiarFormularioCompleto();
+        return;
+      }
+
+      let btnGuardar = document.getElementById('btn-guardar');
+      btnGuardar.disabled = true;
+      btnGuardar.innerText = "Guardando...";
+
+      db.ref('registros').push(payload)
+        .then(() => {
+          mostrarAlerta("Turno guardado con éxito en la nube.", "success");
+          limpiarFormularioCompleto();
+          btnGuardar.disabled = false;
+          btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
+        })
+        .catch(() => {
+          let colaOffline = JSON.parse(localStorage.getItem('cola_registros_offline') || '[]');
+          colaOffline.push(payload);
+          localStorage.setItem('cola_registros_offline', JSON.stringify(colaOffline));
+          mostrarAlerta("Error de red. Turno respaldado offline.", "success");
+          limpiarFormularioCompleto();
+          btnGuardar.disabled = false;
+          btnGuardar.innerHTML = '<i class="fas fa-paper-plane"></i> Guardar Turno';
+        });
+    });
+  }
+
+  function sincronizarTurnosPendientesOffline() {
+    let colaOffline = JSON.parse(localStorage.getItem('cola_registros_offline') || '[]');
+    if (colaOffline.length === 0 || !db) return;
+
+    let sincronizados = 0;
+    colaOffline.forEach((payload) => {
+      db.ref('registros').push(payload).then(() => {
+        sincronizados++;
+        if (sincronizados === colaOffline.length) {
+          localStorage.removeItem('cola_registros_offline');
+          mostrarAlerta("¡Turnos pendientes sincronizados con la nube!", "success");
+        }
+      }).catch(() => {});
+    });
+  }
+
+  function cerrarAdminPanel() { document.getElementById('admin-panel').classList.add('hidden'); }
+
+  function aplicarFondoArchivo() {
+    let fileInput = document.getElementById('bg-file-input');
+    if (fileInput.files && fileInput.files[0]) {
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        localStorage.setItem('customBg', e.target.result);
+        aplicarFondoDesdeStorage();
+        mostrarAlerta("Fondo personalizado cargado.", "success");
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+  }
+
+  function quitarFondoCustom() {
+    localStorage.removeItem('customBg');
+    aplicarFondoDesdeStorage();
+    mostrarAlerta("Fondo restaurado.", "success");
+  }
+
+  function abrirBuscadorFincas() { document.getElementById('modal-buscador').classList.remove('hidden'); }
+  function cerrarBuscadorFincas() { document.getElementById('modal-buscador').classList.add('hidden'); }
+
+  function ejecutarBusquedaFinca() {
+    let query = document.getElementById('input-busca-finca').value.trim().toLowerCase();
+    if(!query) {
+      mostrarAlerta("Ingrese un parámetro a buscar.", "error");
+      return;
+    }
+
+    let cont = document.getElementById('resultado-busqueda');
+    cont.innerHTML = '<p class="text-cyan-400 text-center py-6 font-mono"><i class="fas fa-spinner fa-spin mr-2"></i>Buscando...</p>';
+
+    let colaOffline = JSON.parse(localStorage.getItem('cola_registros_offline') || '[]');
+    let resultadosLocales = colaOffline.filter(r => {
+      return String(r.finca || '').toLowerCase().includes(query) ||
+             String(r.codigoFinca || '').toLowerCase().includes(query) ||
+             String(r.fecha || '').toLowerCase().includes(query);
+    });
+
+    if(!db || !navigator.onLine) {
+      cont.innerHTML = '';
+      if(resultadosLocales.length === 0) {
+        cont.innerHTML = '<p class="text-sky-300/70 text-center py-6 font-mono">Sin conexión y sin registros locales.</p>';
+        return;
+      }
+      resultadosLocales.forEach(r => {
+        let div = document.createElement('div');
+        div.className = 'panel-subbox p-3 rounded-xl space-y-1.5 border border-amber-500/40';
+        div.innerHTML = `
+          <div class="flex justify-between font-bold text-amber-400 border-b border-cyan-500/30 pb-1">
+            <span>${r.finca} (${r.codigoFinca}) [OFFLINE]</span>
+            <span>${r.fecha}</span>
+          </div>
+          <div class="grid grid-cols-2 gap-1 text-xs text-sky-200 font-mono">
+            <div>Ingreso: <b>${r.ingreso}</b></div>
+            <div>Tons: <b class="text-emerald-400">${r.tonsEnviadas}</b></div>
+          </div>
+        `;
+        cont.appendChild(div);
+      });
+      return;
+    }
+
+    db.ref('registros').once('value')
+      .then((snapshot) => {
+        cont.innerHTML = '';
+        let hallados = 0;
+
+        resultadosLocales.forEach(r => {
+          hallados++;
+          let div = document.createElement('div');
+          div.className = 'panel-subbox p-3 rounded-xl space-y-1.5 border border-amber-500/40';
+          div.innerHTML = `
+            <div class="flex justify-between font-bold text-amber-400 border-b border-cyan-500/30 pb-1">
+              <span>${r.finca} (${r.codigoFinca}) [OFFLINE]</span>
+              <span>${r.fecha}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1 text-xs text-sky-200 font-mono">
+              <div>Ingreso: <b>${r.ingreso}</b></div>
+              <div>Tons: <b class="text-emerald-400">${r.tonsEnviadas}</b></div>
+            </div>
+          `;
+          cont.appendChild(div);
+        });
+
+        if(snapshot.exists()) {
+          snapshot.forEach((child) => {
+            let r = child.val();
+            let finca = String(r.finca || '').toLowerCase();
+            let codigo = String(r.codigoFinca || '').toLowerCase();
+            let fecha = String(r.fecha || '').toLowerCase();
+
+            if(finca.includes(query) || codigo.includes(query) || fecha.includes(query)) {
+              hallados++;
+              let div = document.createElement('div');
+              div.className = 'panel-subbox p-3 rounded-xl space-y-1.5';
+              div.innerHTML = `
+                <div class="flex justify-between font-bold text-cyan-300 border-b border-cyan-500/30 pb-1">
+                  <span>${r.finca} (${r.codigoFinca})</span>
+                  <span>${r.fecha}</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1 text-xs text-sky-200 font-mono">
+                  <div>Ingreso / Ruta: <b>${r.ingreso} / ${r.ruta}</b></div>
+                  <div>Dispo: <b>${r.dispo}</b></div>
+                  <div>Tons Enviadas: <b class="text-emerald-400">${r.tonsEnviadas}</b></div>
+                  <div>T. Perdido: <b class="text-amber-400">${r.tiempoPerdidoTotal} min</b></div>
+                </div>
+              `;
+              cont.appendChild(div);
+            }
+          });
+        }
+
+        if(hallados === 0) {
+          cont.innerHTML = '<p class="text-sky-300/70 text-center py-6 font-mono">No se encontraron turnos guardados.</p>';
+        }
+      })
+      .catch((err) => {
+        cont.innerHTML = `<p class="text-red-400 text-center py-6 font-mono">Error: ${err.message}</p>`;
+      });
+  }
+</script>
+</body>
+</html>
