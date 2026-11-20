@@ -1378,8 +1378,8 @@
         </td>
         <td class="p-1">
           <select class="glass-input text-[11px] font-mono font-bold bg-slate-900 px-1 truncate" ${disabledAttr} onchange="actualizarCamion(${c.id}, 'estatus', this.value)">
-            <option value="En Ruta" ${c.estatus === 'En Ruta' ? 'selected' : ''}>🟡 En Ruta</option>
-            <option value="Viene en ruta" ${c.estatus === 'Viene en ruta' ? 'selected' : ''}>🔵 Viene en ruta</option>
+            <option value="En Ruta" ${c.estatus === 'En Ruta' ? 'selected' : ''}>🟢 En Ruta</option>
+            <option value="Viene en ruta" ${c.estatus === 'Viene en ruta' ? 'selected' : ''}>⚪ Viene en ruta</option>
             <option value="En Cola" ${c.estatus === 'En Cola' ? 'selected' : ''}>🟡 Cola</option>
             <option value="Cargando" ${c.estatus === 'Cargando' ? 'selected' : ''}>🔵 Cargando</option>
             <option value="Báscula" ${c.estatus === 'Báscula' ? 'selected' : ''}>🟣 Báscula</option>
