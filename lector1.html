@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Control NFC - Eficiencia Cosecha Cañera</title>
+    <style>
+        :root {
+            --primary: #1b5e20;
+            --bg: #f4f6f8;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --success: #16a34a;
+            --warning: #eab308;
+            --danger: #dc2626;
+            --border: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 80px;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 { font-size: 1.2rem; font-weight: 700; }
+        header p { font-size: 0.8rem; opacity: 0.9; margin-top: 2px; }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 14px;
+        }
+
+        .time-panel {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .time-group { display: flex; flex-direction: column; }
+        .time-group label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .time-group input[type="time"] {
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 8px;
+            margin-top: 4px;
+            color: var(--text);
+        }
+
+        .elapsed-box { text-align: right; }
+        .elapsed-box .hours {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .elapsed-box span { font-size: 0.75rem; color: var(--muted); }
+
+        .nfc-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .btn-nfc {
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            color: white;
+            box-shadow: 0 4px 10px rgba(27, 94, 32, 0.3);
+            font-size: 1.1rem;
+        }
+
+        .btn-nfc.scanning {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.5); }
+            70% { box-shadow: 0 0 0 12px rgba(2, 132, 199, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(2, 132, 199, 0); }
+        }
+
+        .secondary-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-sim { background: #e0f2fe; color: #0369a1; padding: 10px; font-size: 0.85rem; }
+        .btn-manual { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 10px; font-size: 0.85rem; }
+
+        .last-scan {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 14px;
+            font-size: 0.85rem;
+            display: none;
+        }
+        .last-scan.active { display: block; }
+        .last-scan h4 {
+            color: #065f46;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .raw-debug {
+            background: #111827;
+            color: #10b981;
+            font-family: monospace;
+            font-size: 0.72rem;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 8px;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        .summary-strip {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        }
+        .stat-card .val { font-size: 1.3rem; font-weight: 800; color: var(--text); }
+        .stat-card .lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin: 14px 0 8px 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .machine-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+            border-left: 6px solid var(--muted);
+        }
+        .machine-card.status-good { border-left-color: var(--success); }
+        .machine-card.status-warn { border-left-color: var(--warning); }
+        .machine-card.status-bad  { border-left-color: var(--danger); }
+
+        .machine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .machine-id { font-size: 1.15rem; font-weight: 800; }
+        .machine-type {
+            font-size: 0.75rem;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: var(--muted);
+            font-weight: 600;
+            margin-left: 6px;
+        }
+
+        .jaulas-badge {
+            background: var(--primary);
+            color: white;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+        }
+
+        .efficiency-metrics {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .eff-percent { font-weight: 800; }
+        .text-good { color: var(--success); }
+        .text-warn { color: #b45309; }
+        .text-bad  { color: var(--danger); }
+
+        .progress-bg {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease, background-color 0.4s ease;
+        }
+
+        .footer-tools {
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn-export { background: #1f2937; color: white; padding: 12px; font-size: 0.85rem; }
+        .btn-reset { background: #fee2e2; color: var(--danger); padding: 12px; font-size: 0.85rem; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 14px;
+            padding: 18px;
+        }
+        .modal-content h3 { margin-bottom: 8px; font-size: 1.1rem; }
+        .modal-content textarea {
+            width: 100%;
+            height: 140px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+        .modal-btns { display: flex; justify-content: flex-end; gap: 8px; }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111827;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 300;
+            text-align: center;
+            max-width: 90%;
+        }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Control de Cosecha NFC</h1>
+    <p>Meta Eficiencia: 3.0 Jaulas / Hora por Equipo</p>
+</header>
+
+<div class="container">
+    <div class="time-panel">
+        <div class="time-group">
+            <label for="startTime">Inicio de Turno</label>
+            <input type="time" id="startTime">
+        </div>
+        <div class="elapsed-box">
+            <div class="hours" id="elapsedHoursDisplay">1.00 hrs</div>
+            <span>Tiempo transcurrido</span>
+        </div>
+    </div>
+
+    <div class="nfc-actions">
+        <button class="btn btn-nfc" id="btnScanNfc" onclick="iniciarEscaneoNFC()">
+            <span>📡</span> Escanear Tarjeta NFC
+        </button>
+        <div class="secondary-btns">
+            <button class="btn btn-sim" onclick="probarTramaHex()">⚡ Probar Trama Hex</button>
+            <button class="btn btn-manual" onclick="abrirModalManual()">📋 Pegar Texto / Hex</button>
+        </div>
+    </div>
+
+    <!-- Última Lectura -->
+    <div class="last-scan" id="lastScanBox">
+        <h4>
+            <span id="lastUnidad">Viaje #1</span>
+            <span id="lastTime">--:--</span>
+        </h4>
+        <div id="lastPiloto" style="color: #047857; font-weight: 600; margin-bottom: 4px;"></div>
+        <div id="lastDetails" style="color: #374151; font-size: 0.8rem;"></div>
+        <div class="raw-debug" id="rawDebugBox"></div>
+    </div>
+
+    <div class="summary-strip">
+        <div class="stat-card">
+            <div class="val" id="totalViajes">0</div>
+            <div class="lbl">Viajes Leídos</div>
+        </div>
+        <div class="stat-card">
+            <div class="val" id="totalJaulas">0</div>
+            <div class="lbl">Total Jaulas</div>
+        </div>
+        <div class="stat-card">
+            <div class="val" id="globalEff">0%</div>
+            <div class="lbl">Efic. Global</div>
+        </div>
+    </div>
+
+    <div class="section-title">Alzadoras</div>
+    <div id="list-alzadoras"></div>
+
+    <div class="section-title">Tractores</div>
+    <div id="list-tractores"></div>
+
+    <div class="section-title">Otro Equipo</div>
+    <div id="list-otros"></div>
+
+    <div class="footer-tools">
+        <button class="btn btn-export" onclick="exportarCSV()">📥 Descargar Excel (CSV)</button>
+        <button class="btn btn-reset" onclick="reiniciarTurno()">🗑️ Reiniciar Turno</button>
+    </div>
+</div>
+
+<div class="modal" id="manualModal">
+    <div class="modal-content">
+        <h3>Procesar Texto o Hex de Tarjeta NFC</h3>
+        <p style="font-size: 0.8rem; color: #6b7280; margin-bottom: 8px;">
+            Pega texto directo (ej: <code>ALZ:11-41|TRC:07-225|J:1</code>) o bytes en Hex (<code>0x02 0x65...</code>):
+        </p>
+        <textarea id="manualTextInput" placeholder="0x02 0x65 0x73 0x41 0x4C 0x5A..."></textarea>
+        <div class="modal-btns">
+            <button class="btn btn-manual" onclick="cerrarModalManual()">Cancelar</button>
+            <button class="btn btn-nfc" style="padding: 10px 16px; font-size: 0.9rem;" onclick="procesarTextoManual()">Contabilizar</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const META_JAULAS_POR_HORA = 3.0;
+
+    const MAQUINAS_CONFIG = [
+        { id: '11-41', tipo: 'Alzadora', grupo: 'alzadoras', aliases: ['11-41'] },
+        { id: '11-45', tipo: 'Alzadora', grupo: 'alzadoras', aliases: ['11-45'] },
+        { id: '11-29', tipo: 'Alzadora', grupo: 'alzadoras', aliases: ['11-29'] },
+        { id: '07-225', tipo: 'Tractor', grupo: 'tractores', aliases: ['07-225', '7-225'] },
+        { id: '07-226', tipo: 'Tractor', grupo: 'tractores', aliases: ['07-226', '7-226'] },
+        { id: '07-227', tipo: 'Tractor', grupo: 'tractores', aliases: ['07-227', '7-227'] },
+        { id: '07-228', tipo: 'Tractor', grupo: 'tractores', aliases: ['07-228', '7-228'] },
+        { id: '827-45', tipo: 'Equipo',   grupo: 'otros',     aliases: ['827-45'] }
+    ];
+
+    let state = {
+        startTime: null,
+        viajesCount: 0,
+        conteo: {},
+        historial: []
+    };
+
+    function init() {
+        const saved = localStorage.getItem('nfc_cana_state_v2');
+        if (saved) {
+            state = JSON.parse(saved);
+        } else {
+            resetStateObject();
+        }
+
+        document.getElementById('startTime').value = state.startTime;
+        document.getElementById('startTime').addEventListener('change', (e) => {
+            state.startTime = e.target.value;
+            guardarEstado();
+            renderizar();
+        });
+
+        renderizar();
+        setInterval(renderizar, 30000);
+    }
+
+    function resetStateObject() {
+        const now = new Date();
+        now.setHours(now.getHours() - 1);
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+
+        state = {
+            startTime: `${hh}:${mm}`,
+            viajesCount: 0,
+            conteo: {},
+            historial: []
+        };
+        MAQUINAS_CONFIG.forEach(m => state.conteo[m.id] = 0);
+    }
+
+    function guardarEstado() {
+        localStorage.setItem('nfc_cana_state_v2', JSON.stringify(state));
+    }
+
+    function calcularHorasTranscurridas() {
+        if (!state.startTime) return 1;
+        const [startH, startM] = state.startTime.split(':').map(Number);
+        const now = new Date();
+        const startDate = new Date();
+        startDate.setHours(startH, startM, 0, 0);
+
+        if (startDate > now) {
+            startDate.setDate(startDate.getDate() - 1);
+        }
+
+        const diffMs = now - startDate;
+        const diffHours = diffMs / (1000 * 60 * 60);
+        return Math.max(diffHours, 0.1);
+    }
+
+    // Decodificador correcto de bytes NDEF (elimina 0x02 + 'es' u otros códigos de idioma)
+    function decodificarBytesNDEF(uint8Array) {
+        if (!uint8Array || uint8Array.length === 0) return "";
+
+        let offset = 0;
+        const statusByte = uint8Array[0];
+        // En NDEF Text Record, los bits 0-5 indican la longitud del código de idioma (ej. 0x02 = "es")
+        const langLength = statusByte & 0x3F;
+
+        if (langLength > 0 && langLength < 10 && uint8Array.length > langLength + 1) {
+            // Verificamos si después del prefijo de idioma viene texto ASCII legible
+            const posibleTexto = new TextDecoder('utf-8').decode(uint8Array.slice(1 + langLength));
+            if (/[\x20-\x7E]/.test(posibleTexto)) {
+                offset = 1 + langLength;
+            }
+        }
+
+        const isUtf16 = (statusByte & 0x80) !== 0;
+        const decoder = new TextDecoder(isUtf16 ? 'utf-16' : 'utf-8');
+        return decoder.decode(uint8Array.slice(offset)).replace(/[\x00-\x09\x0B-\x1F]/g, '').trim();
+    }
+
+    // Lector Web NFC (Android Chrome)
+    async function iniciarEscaneoNFC() {
+        const btn = document.getElementById('btnScanNfc');
+
+        if (!('NDEFReader' in window)) {
+            mostrarToast("⚠️ Usa Google Chrome en Android con HTTPS para leer NFC físico.");
+            return;
+        }
+
+        try {
+            const ndef = new NDEFReader();
+            await ndef.scan();
+            btn.classList.add('scanning');
+            btn.innerHTML = '<span>📶</span> Acerca la tarjeta NFC...';
+            mostrarToast("Lector NFC activo. Acerca la tarjeta al teléfono.");
+
+            ndef.onreadingerror = () => {
+                mostrarToast("❌ Error de lectura. Mantén pegada la tarjeta 1 segundo.");
+            };
+
+            ndef.onreading = ({ message, serialNumber }) => {
+                let lineasRegistros = [];
+
+                for (const record of message.records) {
+                    const bytes = new Uint8Array(record.data.buffer, record.data.byteOffset, record.data.byteLength);
+                    let textoRecord = "";
+
+                    if (record.recordType === "text") {
+                        // Web NFC a veces ya quita el byte de idioma y a veces lo deja según el fabricante del tag
+                        const rawDec = new TextDecoder(record.encoding || 'utf-8').decode(bytes);
+                        if (bytes[0] < 0x20) {
+                            textoRecord = decodificarBytesNDEF(bytes);
+                        } else {
+                            textoRecord = rawDec.replace(/^es(?=ALZ:|TRC:|UNI:|PIL:)/i, '').trim();
+                        }
+                    } else {
+                        textoRecord = decodificarBytesNDEF(bytes);
+                    }
+
+                    if (textoRecord) {
+                        lineasRegistros.push(textoRecord);
+                    }
+                }
+
+                const textoCompleto = lineasRegistros.join("\n");
+                if (textoCompleto.trim().length > 0) {
+                    procesarDatosTarjeta(textoCompleto, serialNumber);
+                } else {
+                    mostrarToast("⚠️ Tarjeta leída sin contenido de texto.");
+                }
+            };
+        } catch (error) {
+            btn.classList.remove('scanning');
+            btn.innerHTML = '<span>📡</span> Escanear Tarjeta NFC';
+            mostrarToast("❌ Error NFC: " + error.message);
+        }
+    }
+
+    // Parser adaptado a la estructura real: ALZ:...|TRC:...|J:1|TIPO:Hexa|TNS:140
+    function procesarDatosTarjeta(rawText, tagId = 'NFC') {
+        // Si el usuario pegó bytes en formato "0x02 0x65 0x73...", convertirlos primero a texto
+        let textoLimpio = rawText.trim();
+        if (/^(0x[0-9a-fA-F]{2}\s*)+$/.test(textoLimpio)) {
+            const hexBytes = textoLimpio.match(/0x[0-9a-fA-F]{2}/g).map(h => parseInt(h, 16));
+            textoLimpio = decodificarBytesNDEF(new Uint8Array(hexBytes));
+        }
+
+        // Separar por líneas (cada registro NDEF o jaula suele venir en una línea o bloque)
+        const lineas = textoLimpio.split(/\r?\n/).filter(l => l.trim().length > 0);
+
+        let sumasEnEsteViaje = {};
+        let totalJaulasViaje = 0;
+        let unidadDetectada = 'N/D';
+        let pilotoDetectado = '';
+        let detalleTrama = [];
+
+        // Buscar Unidad y Piloto si vienen en alguna línea de cabecera
+        const unidadMatch = textoLimpio.match(/(?:UNI|UNIDAD|CABEZAL)?\s*:?\s*(4\d-\d{3})/i);
+        if (unidadMatch) unidadDetectada = unidadMatch[1];
+
+        const pilotoMatch = textoLimpio.match(/(?:PIL|PILOTO)\s*:\s*([^|\n\r]+)/i);
+        if (pilotoMatch) pilotoDetectado = pilotoMatch[1].trim();
+
+        // Analizar cada línea/registro
+        lineas.forEach(linea => {
+            // Si la línea tiene formato clave:valor separado por |
+            // Ej: ALZ:TAG-:62:68|TRC:07-225|J:1|TIPO:Hexa|TNS:140
+            const partes = linea.split('|');
+            let alzValor = '';
+            let trcValor = '';
+            let jaulaNum = '';
+            let tnsValor = '';
+
+            partes.forEach(p => {
+                const idx = p.indexOf(':');
+                if (idx !== -1) {
+                    const clave = p.slice(0, idx).trim().toUpperCase();
+                    const valor = p.slice(idx + 1).trim();
+                    if (clave === 'ALZ') alzValor = valor;
+                    if (clave === 'TRC') trcValor = valor;
+                    if (clave === 'J')   jaulaNum = valor;
+                    if (clave === 'TNS') tnsValor = valor;
+                }
+            });
+
+            // Buscar coincidencias de nuestras máquinas configuradas en esta línea
+            MAQUINAS_CONFIG.forEach(maq => {
+                let encontrado = false;
+                maq.aliases.forEach(alias => {
+                    const escaped = alias.replace('-', '\\-');
+                    const regex = new RegExp(`(?:^|[^0-9])${escaped}(?:$|[^0-9])`);
+                    if (regex.test(linea)) {
+                        encontrado = true;
+                    }
+                });
+
+                if (encontrado) {
+                    state.conteo[maq.id] = (state.conteo[maq.id] || 0) + 1;
+                    sumasEnEsteViaje[maq.id] = (sumasEnEsteViaje[maq.id] || 0) + 1;
+                    totalJaulasViaje += 1;
+                }
+            });
+
+            if (alzValor || trcValor || jaulaNum) {
+                detalleTrama.push(`Jaula ${jaulaNum || '?'} → ALZ: [${alzValor || '-'}] | TRC: [${trcValor || '-'}]${tnsValor ? ' | TNS: ' + tnsValor : ''}`);
+            }
+        });
+
+        // Mostrar siempre el cuadro de última lectura con la trama decodificada para diagnóstico en campo
+        const lastBox = document.getElementById('lastScanBox');
+        lastBox.classList.add('active');
+        const horaActual = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+        document.getElementById('lastUnidad').textContent = `Unidad: ${unidadDetectada} (Tag: ${tagId})`;
+        document.getElementById('lastTime').textContent = horaActual;
+        document.getElementById('lastPiloto').textContent = pilotoDetectado
+            ? `Piloto: ${pilotoDetectado}`
+            : (detalleTrama.length > 0 ? detalleTrama.join(' • ') : 'Lectura NFC recibida');
+
+        document.getElementById('rawDebugBox').textContent = `Texto leído:\n${textoLimpio}`;
+
+        if (totalJaulasViaje === 0) {
+            mostrarToast("⚠️ Trama leída, pero ningún ID coincide con la lista (ej. ALZ vino como TAG).");
+            return;
+        }
+
+        state.viajesCount += 1;
+        state.historial.unshift({
+            hora: horaActual,
+            unidad: unidadDetectada,
+            detalles: sumasEnEsteViaje,
+            raw: textoLimpio
+        });
+
+        guardarEstado();
+        renderizar();
+
+        const resumenTexto = Object.entries(sumasEnEsteViaje)
+            .map(([id, cant]) => `<b>${id}</b> (+${cant} jaula${cant > 1 ? 's' : ''})`)
+            .join(' • ');
+        document.getElementById('lastDetails').innerHTML = `Sumado al turno: ${resumenTexto}`;
+
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        mostrarToast(`✅ Viaje #${state.viajesCount} sumado (+${totalJaulasViaje} registros)`);
+    }
+
+    function renderizar() {
+        const horas = calcularHorasTranscurridas();
+        document.getElementById('elapsedHoursDisplay').textContent = `${horas.toFixed(2)} hrs`;
+
+        const contAlzadoras = document.getElementById('list-alzadoras');
+        const contTractores = document.getElementById('list-tractores');
+        const contOtros = document.getElementById('list-otros');
+
+        contAlzadoras.innerHTML = '';
+        contTractores.innerHTML = '';
+        contOtros.innerHTML = '';
+
+        let sumaTotalJaulas = 0;
+        let sumaEficiencias = 0;
+
+        MAQUINAS_CONFIG.forEach(maq => {
+            const jaulas = state.conteo[maq.id] || 0;
+            sumaTotalJaulas += jaulas;
+
+            const jaulasPorHora = jaulas / horas;
+            const eficienciaPct = Math.round((jaulasPorHora / META_JAULAS_POR_HORA) * 100);
+            sumaEficiencias += eficienciaPct;
+
+            let statusClass = 'status-bad';
+            let textClass = 'text-bad';
+            let barColor = 'var(--danger)';
+            let estadoTexto = 'Baja eficiencia';
+
+            if (eficienciaPct >= 100) {
+                statusClass = 'status-good';
+                textClass = 'text-good';
+                barColor = 'var(--success)';
+                estadoTexto = 'Meta cumplida';
+            } else if (eficienciaPct >= 70) {
+                statusClass = 'status-warn';
+                textClass = 'text-warn';
+                barColor = 'var(--warning)';
+                estadoTexto = 'En progreso';
+            }
+
+            const barWidth = Math.min(eficienciaPct, 100);
+
+            const cardHtml = `
+                <div class="machine-card ${statusClass}">
+                    <div class="machine-header">
+                        <div>
+                            <span class="machine-id">${maq.id}</span>
+                            <span class="machine-type">${maq.tipo}</span>
+                        </div>
+                        <div class="jaulas-badge">${jaulas} jaulas</div>
+                    </div>
+                    <div class="efficiency-metrics">
+                        <span>Ritmo: <strong>${jaulasPorHora.toFixed(2)}</strong> / 3.0 j/hr</span>
+                        <span class="eff-percent ${textClass}">${eficienciaPct}% (${estadoTexto})</span>
+                    </div>
+                    <div class="progress-bg">
+                        <div class="progress-fill" style="width: ${barWidth}%; background-color: ${barColor};"></div>
+                    </div>
+                </div>
+            `;
+
+            if (maq.grupo === 'alzadoras') contAlzadoras.innerHTML += cardHtml;
+            else if (maq.grupo === 'tractores') contTractores.innerHTML += cardHtml;
+            else contOtros.innerHTML += cardHtml;
+        });
+
+        document.getElementById('totalViajes').textContent = state.viajesCount;
+        document.getElementById('totalJaulas').textContent = sumaTotalJaulas;
+        const promEff = Math.round(sumaEficiencias / MAQUINAS_CONFIG.length);
+        document.getElementById('globalEff').textContent = `${promEff}%`;
+    }
+
+    // Prueba exacta con los bytes hexadecimales que enviaste
+    function probarTramaHex() {
+        const tramaUsuario = "0x02 0x65 0x73 0x41 0x4C 0x5A 0x3A 0x54 0x41 0x47 0x2D 0x3A 0x36 0x32 0x3A 0x36 0x38 0x7C 0x54 0x52 0x43 0x3A 0x30 0x37 0x2D 0x32 0x32 0x35 0x7C 0x4A 0x3A 0x31 0x7C 0x54 0x49 0x50 0x4F 0x3A 0x48 0x65 0x78 0x61 0x7C 0x54 0x4E 0x53 0x3A 0x31 0x34 0x30";
+        procesarDatosTarjeta(tramaUsuario, 'TEST-HEX');
+    }
+
+    function abrirModalManual() { document.getElementById('manualModal').classList.add('open'); }
+    function cerrarModalManual() { document.getElementById('manualModal').classList.remove('open'); }
+
+    function procesarTextoManual() {
+        const txt = document.getElementById('manualTextInput').value;
+        if (!txt.trim()) {
+            mostrarToast("Escribe o pega el texto primero.");
+            return;
+        }
+        procesarDatosTarjeta(txt, 'MANUAL');
+        document.getElementById('manualTextInput').value = '';
+        cerrarModalManual();
+    }
+
+    function exportarCSV() {
+        const horas = calcularHorasTranscurridas().toFixed(2);
+        let csv = "Maquina,Tipo,Jaulas_Acumuladas,Horas_Turno,Jaulas_Por_Hora,Meta_Hora,Eficiencia_Porcentaje\n";
+
+        MAQUINAS_CONFIG.forEach(maq => {
+            const jaulas = state.conteo[maq.id] || 0;
+            const jph = (jaulas / horas).toFixed(2);
+            const eff = Math.round((jph / META_JAULAS_POR_HORA) * 100);
+            csv += `${maq.id},${maq.tipo},${jaulas},${horas},${jph},${META_JAULAS_POR_HORA},${eff}%\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        const fecha = new Date().toISOString().slice(0, 10);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `eficiencia_cosecha_${fecha}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function reiniciarTurno() {
+        if (confirm("¿Seguro que deseas poner todos los contadores en cero e iniciar un nuevo turno?")) {
+            resetStateObject();
+            document.getElementById('startTime').value = state.startTime;
+            document.getElementById('lastScanBox').classList.remove('active');
+            guardarEstado();
+            renderizar();
+            mostrarToast("🔄 Turno reiniciado a cero.");
+        }
+    }
+
+    function mostrarToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    init();
+</script>
+
+</body>
+</html>
